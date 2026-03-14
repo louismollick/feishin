@@ -7,6 +7,7 @@ import styles from './sidebar.module.css';
 
 import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import {
     useIsRadioActive,
     useRadioPlayer,
@@ -20,6 +21,7 @@ import {
     SidebarPlaylistList,
     SidebarSharedPlaylistList,
 } from '/@/renderer/features/sidebar/components/sidebar-playlist-list';
+import { AppRoute } from '/@/renderer/router/routes';
 import {
     useAppStore,
     useAppStoreActions,
@@ -57,6 +59,10 @@ export const Sidebar = () => {
             Artists: t('page.sidebar.albumArtists', { postProcess: 'titleCase' }),
             'Artists-all': t('page.sidebar.artists', { postProcess: 'titleCase' }),
             Collections: t('page.sidebar.collections', { postProcess: 'titleCase' }),
+            Downloads: t('page.sidebar.downloads', {
+                defaultValue: 'Downloads',
+                postProcess: 'titleCase',
+            }),
             Favorites: t('page.sidebar.favorites', { postProcess: 'titleCase' }),
             Folders: t('page.sidebar.folders', { postProcess: 'titleCase' }),
             Genres: t('page.sidebar.genres', { postProcess: 'titleCase' }),
@@ -93,8 +99,19 @@ export const Sidebar = () => {
 
     /* Library accordion: only items with a route (exclude Collections section) */
     const libraryItemsWithRoute = useMemo(
-        () => sidebarItemsWithRoute.filter((item) => item.id !== 'Collections' && item.route),
-        [sidebarItemsWithRoute],
+        () => [
+            ...sidebarItemsWithRoute.filter((item) => item.id !== 'Collections' && item.route),
+            {
+                disabled: false,
+                id: 'Downloads',
+                label: t('page.sidebar.downloads', {
+                    defaultValue: 'Downloads',
+                    postProcess: 'titleCase',
+                }),
+                route: AppRoute.DOWNLOADS,
+            },
+        ],
+        [sidebarItemsWithRoute, t],
     );
 
     const isCustomWindowBar =
@@ -176,6 +193,7 @@ const SidebarImage = () => {
         serverId: currentSong?._serverId,
         type: 'sidebar',
     });
+    const offlineImageUrl = useOfflineArtworkUrl(currentSong?._serverId, currentSong?.imageId);
 
     const isPlayingRadio = isRadioActive && isRadioPlaying;
     const isSongDefined = Boolean(currentSong?.id);
@@ -236,7 +254,7 @@ const SidebarImage = () => {
                     >
                         <Icon color="muted" icon="radio" size="40%" />
                     </Center>
-                ) : imageUrl ? (
+                ) : offlineImageUrl || imageUrl ? (
                     <img
                         className={clsx(styles.sidebarImage, {
                             [styles.censored]:
@@ -244,7 +262,7 @@ const SidebarImage = () => {
                                 blurExplicitImages,
                         })}
                         loading="eager"
-                        src={imageUrl}
+                        src={offlineImageUrl || imageUrl}
                     />
                 ) : (
                     <ImageUnloader icon="emptySongImage" />

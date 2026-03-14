@@ -1252,6 +1252,68 @@ export type LyricsQuery = {
 
 export type LyricsResponse = string | SynchronizedLyricsArray;
 
+export type OfflineArtworkRecord = {
+    blob: Blob;
+    downloadedAt: string;
+    id: string;
+    imageId: string;
+    mimeType: null | string;
+    serverId: string;
+    sizeBytes: number;
+};
+
+export type OfflineAvailability = 'downloaded' | 'downloading' | 'failed' | 'none' | 'queued';
+
+export type OfflineDownloadJob = {
+    createdAt: string;
+    error: null | string;
+    id: string;
+    progress: number;
+    serverId: string;
+    song: Song;
+    songId: string;
+    status: 'downloaded' | Exclude<OfflineAvailability, 'downloaded' | 'none'>;
+    updatedAt: string;
+};
+
+export type OfflineLyricsRecord = {
+    downloadedAt: string;
+    id: string;
+    lyrics: LyricsResponse;
+    metadata: null | Omit<FullLyricsMetadata, 'lyrics'>;
+    serverId: string;
+    songId: string;
+};
+
+export type OfflineSourceRef = {
+    id: string;
+    type:
+        | LibraryItem.ALBUM
+        | LibraryItem.ALBUM_ARTIST
+        | LibraryItem.ARTIST
+        | LibraryItem.FOLDER
+        | LibraryItem.GENRE
+        | LibraryItem.PLAYLIST
+        | LibraryItem.SONG;
+};
+
+export type OfflineTrackRecord = {
+    artworkId: null | string;
+    audioBlob: Blob | null;
+    downloadedAt: null | string;
+    error: null | string;
+    id: string;
+    imageId: null | string;
+    lyricsId: null | string;
+    mimeType: null | string;
+    serverId: string;
+    sizeBytes: number;
+    song: Song;
+    songId: string;
+    sourceRefs: OfflineSourceRef[];
+    status: Exclude<OfflineAvailability, 'none'>;
+};
+
 export type RandomSongListArgs = BaseEndpointArgs & {
     query: RandomSongListQuery;
 };

@@ -73,7 +73,7 @@ export default defineConfig({
                 // The PWA will not be shown during development
                 enabled: false,
             },
-            filename: 'assets/sw.js',
+            filename: 'sw.js',
             injectRegister: 'inline',
             manifest: {
                 background_color: '#FFDCB5',
@@ -123,13 +123,13 @@ export default defineConfig({
                     },
                 ],
                 short_name: 'Feishin',
-                start_url: '/',
+                start_url: './',
                 theme_color: '#1E003D',
             },
-            manifestFilename: 'assets/manifest.webmanifest',
+            manifestFilename: 'manifest.webmanifest',
             outDir: path.resolve(__dirname, './out/web/'),
             registerType: 'autoUpdate',
-            scope: '/assets/',
+            scope: './',
             workbox: {
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,

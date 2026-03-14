@@ -8,6 +8,7 @@ import styles from './mobile-playerbar.module.css';
 
 import { ItemImage } from '/@/renderer/components/item-image/item-image';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import { MainPlayButton, PlayerButton } from '/@/renderer/features/player/components/player-button';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { AppRoute } from '/@/renderer/router/routes';
@@ -30,10 +31,11 @@ import { PlayerStatus } from '/@/shared/types/types';
 
 export const MobilePlayerbar = () => {
     const { t } = useTranslation();
-    const { expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
+    const { activeTab, expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
     const setFullScreenPlayerStore = useSetFullScreenPlayerStore();
     const { setStore } = useFullScreenPlayerStoreActions();
     const currentSong = usePlayerSong();
+    const offlineArtworkUrl = useOfflineArtworkUrl(currentSong?._serverId, currentSong?.imageId);
     const status = usePlayerStatus();
     const { mediaNext, mediaPrevious, mediaTogglePlayPause } = usePlayer();
     const title = currentSong?.name;
@@ -45,6 +47,12 @@ export const MobilePlayerbar = () => {
         // Set active tab to player when opening fullscreen player
         setStore({ activeTab: 'player' });
         setFullScreenPlayerStore({ expanded: !isFullScreenPlayerExpanded });
+    };
+
+    const handleOpenLyrics = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setStore({ activeTab: 'lyrics' });
+        setFullScreenPlayerStore({ expanded: true });
     };
 
     const handleToggleContextMenu = (e: MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
@@ -98,6 +106,7 @@ export const MobilePlayerbar = () => {
                                             fetchPriority="high"
                                             id={currentSong.imageId}
                                             itemType={LibraryItem.SONG}
+                                            src={offlineArtworkUrl || undefined}
                                             type="table"
                                         />
                                     </Tooltip>
@@ -201,6 +210,25 @@ export const MobilePlayerbar = () => {
                 </LayoutGroup>
             </div>
             <div className={styles.controlsWrapper}>
+                <PlayerButton
+                    icon={
+                        <Icon
+                            fill={
+                                activeTab === 'lyrics' && isFullScreenPlayerExpanded
+                                    ? 'primary'
+                                    : 'default'
+                            }
+                            icon="microphone"
+                            size="md"
+                        />
+                    }
+                    onClick={handleOpenLyrics}
+                    tooltip={{
+                        label: t('player.lyrics', { postProcess: 'sentenceCase' }),
+                        openDelay: 0,
+                    }}
+                    variant="tertiary"
+                />
                 <PlayerButton
                     icon={<Icon fill="default" icon="mediaPrevious" size="md" />}
                     onClick={(e) => {

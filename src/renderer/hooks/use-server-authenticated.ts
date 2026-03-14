@@ -7,8 +7,10 @@ import { useNavigate } from 'react-router';
 
 import { api } from '/@/renderer/api';
 import { controller } from '/@/renderer/api/controller';
+import { hasOfflineContent } from '/@/renderer/features/offline/offline-service';
 import { AppRoute } from '/@/renderer/router/routes';
 import { getServerById, useAuthStoreActions, useCurrentServer } from '/@/renderer/store';
+import { useOfflineStoreBase } from '/@/renderer/store/offline.store';
 import { LogCategory, logFn } from '/@/renderer/utils/logger';
 import { logMsg } from '/@/renderer/utils/logger-message';
 import { toast } from '/@/shared/components/toast/toast';
@@ -311,6 +313,13 @@ export const useServerAuthenticated = () => {
                     });
 
                     // Don't clear credentials on network failure - preserve them for when network returns
+                    if (await hasOfflineContent()) {
+                        await useOfflineStoreBase.getState().actions.setOfflineMode(true);
+                        setReady(AuthState.VALID);
+                        navigate(AppRoute.DOWNLOADS, { replace: true });
+                        return;
+                    }
+
                     setReady(AuthState.INVALID);
                     navigate(AppRoute.NO_NETWORK, { replace: true });
                     return;
