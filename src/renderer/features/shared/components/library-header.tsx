@@ -335,7 +335,7 @@ export const LibraryHeaderMenu = ({
 
     return (
         <div className={styles.libraryHeaderMenu}>
-            <Group wrap="nowrap">
+            <Group className={styles.primaryActions}>
                 {onPlay && <PlayTextButton {...handlePlayNow.handlers} {...handlePlayNow.props} />}
                 {onPlay && (
                     <PlayNextTextButton {...handlePlayNext.handlers} {...handlePlayNext.props} />
@@ -378,7 +378,7 @@ export const LibraryHeaderMenu = ({
                     </Button>
                 )}
             </Group>
-            <Group gap="sm" wrap="nowrap">
+            <Group className={styles.secondaryActions} gap="sm">
                 {onRating && (
                     <Rating
                         onChange={onRating}

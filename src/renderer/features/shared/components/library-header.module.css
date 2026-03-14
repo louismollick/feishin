@@ -117,10 +117,12 @@
     grid-area: image;
     align-items: center;
     justify-content: center;
+    width: 100%;
     filter: drop-shadow(0 0 8px rgb(0 0 0 / 50%));
 
     @container (min-width: $mantine-breakpoint-sm) {
         align-items: flex-end;
+        width: auto;
     }
 }
 
@@ -151,11 +153,18 @@
 .title {
     display: flex;
     margin: 0;
+    max-width: 100%;
     font-size: clamp(1.75rem, 3dvw, 2.75rem);
     font-weight: 800;
     line-height: 1.2;
-    word-break: keep-all;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     text-wrap: pretty;
+
+    @container (min-width: $mantine-breakpoint-sm) {
+        word-break: keep-all;
+        overflow-wrap: break-word;
+    }
 }
 
 .library-header-menu {
@@ -170,5 +179,37 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        align-items: flex-start;
+    }
+}
+
+.primary-actions {
+    gap: var(--theme-spacing-sm);
+    justify-content: center;
+    width: 100%;
+}
+
+.secondary-actions {
+    justify-content: center;
+    width: 100%;
+}
+
+.primary-actions > * {
+    flex: 0 1 auto;
+}
+
+@container (min-width: $mantine-breakpoint-sm) {
+    .primary-actions,
+    .secondary-actions {
+        justify-content: flex-start;
+        width: auto;
+    }
+
+    .primary-actions {
+        flex-wrap: nowrap;
+    }
+
+    .secondary-actions {
+        flex-wrap: nowrap;
     }
 }

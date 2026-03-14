@@ -1,0 +1,35 @@
+.viewport {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+.content-scroll {
+    height: 100%;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--theme-spacing-xl);
+    min-height: 100%;
+    padding: var(--theme-spacing-xl);
+}
+
+.mobile {
+    justify-content: flex-start;
+    padding: var(--theme-spacing-md);
+}
+
+.desktop {
+    align-items: center;
+    justify-content: center;
+}
+
+.panel {
+    width: min(100%, 700px);
+}
+
+.actions {
+    width: min(100%, 700px);
+}

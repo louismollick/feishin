@@ -13,6 +13,7 @@ import JellyfinIcon from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeIcon from '/@/renderer/features/servers/assets/navidrome.png';
 import SubsonicIcon from '/@/renderer/features/servers/assets/opensubsonic.png';
 import { IgnoreCorsSslSwitches } from '/@/renderer/features/servers/components/ignore-cors-ssl-switches';
+import { useIsMobile } from '/@/renderer/hooks/use-is-mobile';
 import { useAuthStoreActions, useServerList } from '/@/renderer/store';
 import { Checkbox } from '/@/shared/components/checkbox/checkbox';
 import { Divider } from '/@/shared/components/divider/divider';
@@ -95,6 +96,7 @@ const ALL_SERVERS = Object.keys(SERVER_TYPES).map((serverType) => {
 
 export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
     const { t } = useTranslation();
+    const isMobile = useIsMobile();
     const focusTrapRef = useFocusTrap(true);
     const [isLoading, setIsLoading] = useState(false);
     const { addServer, setCurrentServer } = useAuthStoreActions();
@@ -249,27 +251,51 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         withItemsBorders={false}
                         {...form.getInputProps('type')}
                     />
-                    <Group grow>
-                        <TextInput
-                            data-autofocus
-                            disabled={serverLock}
-                            label={t('form.addServer.input', {
-                                context: 'name',
-                                postProcess: 'titleCase',
-                            })}
-                            required
-                            {...form.getInputProps('name')}
-                        />
-                        <TextInput
-                            disabled={serverLock}
-                            label={t('form.addServer.input', {
-                                context: 'url',
-                                postProcess: 'titleCase',
-                            })}
-                            required
-                            {...form.getInputProps('url')}
-                        />
-                    </Group>
+                    {isMobile ? (
+                        <Stack>
+                            <TextInput
+                                data-autofocus
+                                disabled={serverLock}
+                                label={t('form.addServer.input', {
+                                    context: 'name',
+                                    postProcess: 'titleCase',
+                                })}
+                                required
+                                {...form.getInputProps('name')}
+                            />
+                            <TextInput
+                                disabled={serverLock}
+                                label={t('form.addServer.input', {
+                                    context: 'url',
+                                    postProcess: 'titleCase',
+                                })}
+                                required
+                                {...form.getInputProps('url')}
+                            />
+                        </Stack>
+                    ) : (
+                        <Group grow>
+                            <TextInput
+                                data-autofocus
+                                disabled={serverLock}
+                                label={t('form.addServer.input', {
+                                    context: 'name',
+                                    postProcess: 'titleCase',
+                                })}
+                                required
+                                {...form.getInputProps('name')}
+                            />
+                            <TextInput
+                                disabled={serverLock}
+                                label={t('form.addServer.input', {
+                                    context: 'url',
+                                    postProcess: 'titleCase',
+                                })}
+                                required
+                                {...form.getInputProps('url')}
+                            />
+                        </Group>
+                    )}
                     <TextInput
                         disabled={serverLock}
                         label={t('form.addServer.input', {

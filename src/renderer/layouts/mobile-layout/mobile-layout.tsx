@@ -10,7 +10,7 @@ import { FullScreenVisualizer } from '/@/renderer/features/player/components/ful
 import { MobileFullscreenPlayer } from '/@/renderer/features/player/components/mobile-fullscreen-player';
 import { MobileSidebar } from '/@/renderer/features/sidebar/components/mobile-sidebar';
 import { PlayerBar } from '/@/renderer/layouts/default-layout/player-bar';
-import { useFullScreenPlayerStore } from '/@/renderer/store';
+import { useCurrentServer, useFullScreenPlayerStore } from '/@/renderer/store';
 import { useWindowSettings } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Drawer } from '/@/shared/components/drawer/drawer';
@@ -29,6 +29,7 @@ interface MobileLayoutProps {
 
 export const MobileLayout = ({ shell }: MobileLayoutProps) => {
     const [sidebarOpened, { close: closeSidebar, open: openSidebar }] = useDisclosure(false);
+    const currentServer = useCurrentServer();
     const {
         expanded: isFullScreenPlayerExpanded,
         visualizerExpanded: isFullScreenVisualizerExpanded,
@@ -45,14 +46,16 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
                 id="mobile-layout"
             >
                 {!shell && <WindowBar />}
-                <ActionIcon
-                    className={styles.drawerButton}
-                    icon="menu"
-                    onClick={openSidebar}
-                    size="lg"
-                    tooltip={{ label: 'Menu' }}
-                    variant="subtle"
-                />
+                {currentServer && (
+                    <ActionIcon
+                        className={styles.drawerButton}
+                        icon="menu"
+                        onClick={openSidebar}
+                        size="lg"
+                        tooltip={{ label: 'Menu' }}
+                        variant="subtle"
+                    />
+                )}
                 <main className={styles.mainContent}>
                     <Outlet />
                 </main>
