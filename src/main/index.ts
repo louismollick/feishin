@@ -41,6 +41,7 @@ import {
 } from './utils';
 import './features';
 
+import { RECOMMENDED_DICTIONARY_URLS } from '/@/shared/constants/yomitan';
 import { PlayerType, TitleTheme } from '/@/shared/types/types';
 
 const ALPHA_UPDATER_CONFIG: {
@@ -868,6 +869,22 @@ ipcMain.handle('power-save-blocker-stop', () => {
 
 ipcMain.handle('power-save-blocker-is-started', () => {
     return powerSaveBlockerId !== null && powerSaveBlocker.isStarted(powerSaveBlockerId);
+});
+
+ipcMain.handle('yomitan-download-recommended-dictionary', async (_event, url: string) => {
+    if (!RECOMMENDED_DICTIONARY_URLS.has(url)) {
+        throw new Error('Blocked unapproved recommended dictionary URL');
+    }
+
+    const response = await net.fetch(url, {
+        bypassCustomProtocolHandlers: true,
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to download dictionary (HTTP ${response.status})`);
+    }
+
+    return Buffer.from(await response.arrayBuffer());
 });
 
 app.on('window-all-closed', () => {

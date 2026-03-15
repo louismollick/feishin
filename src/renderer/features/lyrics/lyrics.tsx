@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import clsx from 'clsx';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,8 +27,22 @@ import {
 import { openLyricsSettingsModal } from '/@/renderer/features/lyrics/utils/open-lyrics-settings-modal';
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
 import { ComponentErrorBoundary } from '/@/renderer/features/shared/components/component-error-boundary';
+import {
+    areDictionaryPreferencesEqual,
+    buildEnabledDictionaryMap,
+    buildPlainTextTokens,
+    getInstalledDictionaries,
+    lookupTerm,
+    normalizeYomitanDictionaryPreferences,
+    type TokenizedLyricLine,
+    tokenizeText,
+    type YomitanLookupEntry,
+    type YomitanToken,
+} from '/@/renderer/features/yomitan/core';
+import { YomitanDictionaryPanel } from '/@/renderer/features/yomitan/yomitan-dictionary-panel';
+import { yomitanQueryKeys } from '/@/renderer/features/yomitan/yomitan-query';
 import { queryClient } from '/@/renderer/lib/react-query';
-import { useLyricsSettings, usePlayerSong } from '/@/renderer/store';
+import { useLyricsSettings, usePlayerSong, useSettingsStoreActions } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Center } from '/@/shared/components/center/center';
 import { Group } from '/@/shared/components/group/group';
@@ -35,8 +50,15 @@ import { Spinner } from '/@/shared/components/spinner/spinner';
 import { Text } from '/@/shared/components/text/text';
 import { LyricsOverride } from '/@/shared/types/domain-types';
 
+type LyricLineSource = {
+    key: string;
+    text: string;
+    translatedText?: string;
+};
+
 type LyricsProps = {
     fadeOutNoLyricsMessage?: boolean;
+    lookupLayout?: 'default' | 'mobile-split';
     settingsKey?: string;
     showActions?: boolean;
     showSettingsButton?: boolean;
@@ -44,25 +66,70 @@ type LyricsProps = {
 
 export const Lyrics = ({
     fadeOutNoLyricsMessage = true,
+    lookupLayout = 'default',
     settingsKey = 'default',
     showActions = true,
     showSettingsButton = true,
 }: LyricsProps) => {
     const currentSong = usePlayerSong();
+    const lyricsSettings = useLyricsSettings();
     const {
         enableAutoTranslation,
         preferLocalLyrics,
         translationApiKey,
         translationApiProvider,
         translationTargetLanguage,
-    } = useLyricsSettings();
+        yomitanDictionaries,
+    } = lyricsSettings;
+    const { setSettings } = useSettingsStoreActions();
     const { t } = useTranslation();
+
     const [index, setIndexState] = useState(0);
     const [translatedLyrics, setTranslatedLyrics] = useState<null | string>(null);
     const [showTranslation, setShowTranslation] = useState(false);
     const [pendingSongId, setPendingSongId] = useState<string | undefined>(currentSong?.id);
+    const [tokenizedLines, setTokenizedLines] = useState<TokenizedLyricLine[]>([]);
+    const [lookupEntries, setLookupEntries] = useState<YomitanLookupEntry[]>([]);
+    const [lookupError, setLookupError] = useState<null | string>(null);
+    const [lookupLoading, setLookupLoading] = useState(false);
+    const [selectedToken, setSelectedToken] = useState<null | YomitanToken>(null);
+    const [shouldFadeOut, setShouldFadeOut] = useState(false);
+
     const lyricsFetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const previousSongIdRef = useRef<string | undefined>(currentSong?.id);
+    const lookupRequestIdRef = useRef(0);
+
+    const { data: installedDictionaries = [] } = useQuery({
+        queryFn: getInstalledDictionaries,
+        queryKey: yomitanQueryKeys.dictionaries,
+    });
+
+    const normalizedDictionaryPreferences = useMemo(
+        () =>
+            normalizeYomitanDictionaryPreferences(
+                installedDictionaries.map((item) => item.title),
+                yomitanDictionaries,
+            ),
+        [installedDictionaries, yomitanDictionaries],
+    );
+
+    useEffect(() => {
+        if (areDictionaryPreferencesEqual(normalizedDictionaryPreferences, yomitanDictionaries)) {
+            return;
+        }
+
+        setSettings({
+            lyrics: {
+                ...lyricsSettings,
+                yomitanDictionaries: normalizedDictionaryPreferences,
+            },
+        });
+    }, [lyricsSettings, normalizedDictionaryPreferences, setSettings, yomitanDictionaries]);
+
+    const enabledDictionaryMap = useMemo(
+        () => buildEnabledDictionaryMap(normalizedDictionaryPreferences),
+        [normalizedDictionaryPreferences],
+    );
 
     useEffect(() => {
         const currentSongId = currentSong?.id;
@@ -91,6 +158,7 @@ export const Lyrics = ({
 
     const lyricsKey = useMemo(() => {
         if (!currentSong?._serverId || !currentSong?.id) return null;
+
         return queryKeys.songs.lyrics(currentSong._serverId, { songId: currentSong.id });
     }, [currentSong]);
 
@@ -108,23 +176,168 @@ export const Lyrics = ({
     );
 
     const indexToUse = data?.selectedStructuredIndex ?? index;
+
     useEffect(() => {
-        if (data != null) setIndexState(data.selectedStructuredIndex);
+        if (data != null) {
+            setIndexState(data.selectedStructuredIndex);
+        }
     }, [data]);
 
     const { selected: lyrics, selectedSynced: synced } = useMemo(() => {
-        if (!data) return { selected: null, selectedSynced: false };
+        if (!data) {
+            return { selected: null, selectedSynced: false };
+        }
+
         return computeSelectedFromResult(data, preferLocalLyrics, indexToUse);
     }, [data, indexToUse, preferLocalLyrics]);
 
     const currentOffsetMs = useMemo(() => {
-        if (!data) return 0;
+        if (!data) {
+            return 0;
+        }
+
         return getDisplayOffset(lyrics, data.selectedOffsetMs, indexToUse, data.local);
     }, [data, indexToUse, lyrics]);
+
+    const translatedLineArray = useMemo(
+        () => (showTranslation && translatedLyrics ? translatedLyrics.split('\n') : []),
+        [showTranslation, translatedLyrics],
+    );
+
+    const lyricLineSource = useMemo<LyricLineSource[]>(() => {
+        if (!lyrics) {
+            return [];
+        }
+
+        if (Array.isArray(lyrics.lyrics)) {
+            return lyrics.lyrics.map(([, line], lineIndex) => ({
+                key: `${lineIndex}-${line}`,
+                text: line,
+                translatedText: translatedLineArray[lineIndex],
+            }));
+        }
+
+        return lyrics.lyrics.split('\n').map((line, lineIndex) => ({
+            key: `${lineIndex}-${line}`,
+            text: line,
+            translatedText: translatedLineArray[lineIndex],
+        }));
+    }, [lyrics, translatedLineArray]);
+
+    const lyricLineSourceSignature = useMemo(
+        () => lyricLineSource.map((line) => line.key).join('\n'),
+        [lyricLineSource],
+    );
+
+    const resetLookup = useCallback(() => {
+        lookupRequestIdRef.current += 1;
+        setLookupEntries([]);
+        setLookupError(null);
+        setLookupLoading(false);
+        setSelectedToken(null);
+    }, []);
+
+    useEffect(() => {
+        if (enabledDictionaryMap.size > 0) {
+            return;
+        }
+
+        resetLookup();
+    }, [enabledDictionaryMap, resetLookup]);
+
+    useEffect(() => {
+        resetLookup();
+    }, [currentSong?.id, lyricLineSourceSignature, resetLookup]);
+
+    useEffect(() => {
+        const fallbackLines = lyricLineSource.map((line) => ({
+            ...line,
+            tokens: buildPlainTextTokens(line.text),
+        }));
+
+        setTokenizedLines(fallbackLines);
+
+        if (lyricLineSource.length === 0 || enabledDictionaryMap.size === 0) {
+            return;
+        }
+
+        let cancelled = false;
+
+        const run = async () => {
+            try {
+                const nextLines = await Promise.all(
+                    lyricLineSource.map(async (line) => ({
+                        ...line,
+                        tokens: await tokenizeText(line.text, enabledDictionaryMap),
+                    })),
+                );
+
+                if (!cancelled) {
+                    setTokenizedLines(nextLines);
+                }
+            } catch (error) {
+                console.error('Failed to tokenize lyrics for Yomitan lookup:', error);
+
+                if (!cancelled) {
+                    setTokenizedLines(fallbackLines);
+                }
+            }
+        };
+
+        void run();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [enabledDictionaryMap, lyricLineSource]);
+
+    const handleLookupToken = useCallback(
+        async (token: YomitanToken) => {
+            if (!token.selectable || enabledDictionaryMap.size === 0) {
+                return;
+            }
+
+            const requestId = lookupRequestIdRef.current + 1;
+            const lookupText = token.term.trim() || token.text.trim();
+            lookupRequestIdRef.current = requestId;
+
+            setSelectedToken(token);
+            setLookupEntries([]);
+            setLookupError(null);
+            setLookupLoading(true);
+
+            try {
+                const result = await lookupTerm(lookupText, enabledDictionaryMap);
+
+                if (lookupRequestIdRef.current !== requestId) {
+                    return;
+                }
+
+                setLookupEntries(result.entries);
+                setLookupLoading(false);
+            } catch (error) {
+                console.error(`Failed Yomitan lookup for token "${lookupText}":`, error);
+
+                if (lookupRequestIdRef.current !== requestId) {
+                    return;
+                }
+
+                setLookupEntries([]);
+                setLookupError(
+                    t('setting.yomitanLookupFailed', {
+                        defaultValue: 'Failed to load dictionary results.',
+                    }),
+                );
+                setLookupLoading(false);
+            }
+        },
+        [enabledDictionaryMap, t],
+    );
 
     const handleOnSearchOverride = useCallback(
         (params: LyricsOverride) => {
             if (!lyricsKey) return;
+
             queryClient.setQueryData<LyricsQueryResult>(lyricsKey, (prev) =>
                 prev ? { ...prev, overrideSelection: params } : prev,
             );
@@ -139,7 +352,9 @@ export const Lyrics = ({
 
             queryClient.setQueryData<LyricsQueryResult>(lyricsKey, (prev) => {
                 if (!prev) return prev;
+
                 const updated = { ...prev, selectedOffsetMs: offsetMs };
+
                 if (Array.isArray(prev.local) && prev.local.length > 0) {
                     const idx = Math.min(indexToUse, prev.local.length - 1);
                     updated.local = [...prev.local];
@@ -148,6 +363,7 @@ export const Lyrics = ({
                         offsetMs,
                     };
                 }
+
                 return updated;
             });
         },
@@ -157,7 +373,9 @@ export const Lyrics = ({
     const setIndex = useCallback(
         (newIndex: number) => {
             setIndexState(newIndex);
+
             if (!lyricsKey || !data) return;
+
             const { selected: nextSelected, selectedSynced: nextSynced } =
                 computeSelectedFromResult(data, preferLocalLyrics, newIndex);
             const nextOffset = getDisplayOffset(
@@ -166,6 +384,7 @@ export const Lyrics = ({
                 newIndex,
                 data.local,
             );
+
             queryClient.setQueryData<LyricsQueryResult>(lyricsKey, (prev) =>
                 prev
                     ? {
@@ -200,16 +419,19 @@ export const Lyrics = ({
 
     const fetchTranslation = useCallback(async () => {
         if (!lyrics) return;
+
         const originalLyrics = Array.isArray(lyrics.lyrics)
             ? lyrics.lyrics.map(([, line]) => line).join('\n')
             : lyrics.lyrics;
-        const TranslatedText: null | string = await translateLyrics(
+
+        const translatedText = await translateLyrics(
             originalLyrics,
             translationApiKey,
             translationApiProvider,
             translationTargetLanguage,
         );
-        setTranslatedLyrics(TranslatedText);
+
+        setTranslatedLyrics(translatedText);
         setShowTranslation(true);
     }, [lyrics, translationApiKey, translationApiProvider, translationTargetLanguage]);
 
@@ -218,8 +440,9 @@ export const Lyrics = ({
             setShowTranslation(!showTranslation);
             return;
         }
+
         await fetchTranslation();
-    }, [translatedLyrics, showTranslation, fetchTranslation]);
+    }, [fetchTranslation, showTranslation, translatedLyrics]);
 
     usePlayerEvents(
         {
@@ -227,31 +450,37 @@ export const Lyrics = ({
                 setIndexState(0);
                 setShowTranslation(false);
                 setTranslatedLyrics(null);
+                resetLookup();
             },
         },
-        [],
+        [resetLookup],
     );
 
     useEffect(() => {
         if (lyrics && !translatedLyrics && enableAutoTranslation) {
-            fetchTranslation();
+            void fetchTranslation();
         }
     }, [lyrics, translatedLyrics, enableAutoTranslation, fetchTranslation]);
 
     const languages = useMemo(() => {
         const local = data?.local;
+
         if (Array.isArray(local)) {
-            return local.map((lyric, idx) => ({ label: lyric.lang, value: idx.toString() }));
+            return local.map((lyric, languageIndex) => ({
+                label: lyric.lang,
+                value: languageIndex.toString(),
+            }));
         }
+
         if (local && !Array.isArray(local) && 'lyrics' in local) {
             return [{ label: 'xxx', value: '0' }];
         }
+
         return [];
     }, [data?.local]);
 
     const isLoadingLyrics = isLoading;
     const hasNoLyrics = !lyrics;
-    const [shouldFadeOut, setShouldFadeOut] = useState(false);
 
     useEffect(() => {
         if (!fadeOutNoLyricsMessage) {
@@ -263,6 +492,7 @@ export const Lyrics = ({
             const timer = setTimeout(() => {
                 setShouldFadeOut(true);
             }, 3000);
+
             return () => clearTimeout(timer);
         }
 
@@ -271,7 +501,7 @@ export const Lyrics = ({
         }
 
         return undefined;
-    }, [isLoadingLyrics, hasNoLyrics, fadeOutNoLyricsMessage]);
+    }, [fadeOutNoLyricsMessage, hasNoLyrics, isLoadingLyrics]);
 
     const handleExportLyrics = useCallback(() => {
         if (lyrics) {
@@ -282,6 +512,26 @@ export const Lyrics = ({
     const handleOpenSettings = () => {
         openLyricsSettingsModal(settingsKey);
     };
+
+    const dictionaryPanel =
+        selectedToken && enabledDictionaryMap.size > 0 ? (
+            <div
+                className={
+                    lookupLayout === 'mobile-split'
+                        ? styles.lookupPanelSplit
+                        : styles.lookupPanelDocked
+                }
+            >
+                <YomitanDictionaryPanel
+                    dictionaries={installedDictionaries}
+                    entries={lookupEntries}
+                    error={lookupError}
+                    loading={lookupLoading}
+                    onClose={resetLookup}
+                    token={selectedToken}
+                />
+            </div>
+        ) : null;
 
     return (
         <ComponentErrorBoundary>
@@ -298,6 +548,7 @@ export const Lyrics = ({
                         variant="subtle"
                     />
                 )}
+
                 {isLoadingLyrics ? (
                     <Spinner container />
                 ) : (
@@ -321,28 +572,56 @@ export const Lyrics = ({
                         ) : (
                             <motion.div
                                 animate={{ opacity: 1 }}
-                                className={styles.scrollContainer}
+                                className={clsx(styles.contentArea, {
+                                    [styles.contentAreaSplit]:
+                                        lookupLayout === 'mobile-split' && !!selectedToken,
+                                })}
                                 initial={{ opacity: 0 }}
                                 transition={{ duration: 0.5 }}
                             >
-                                {synced ? (
-                                    <SynchronizedLyrics
-                                        {...(lyrics as SynchronizedLyricsProps)}
-                                        offsetMs={currentOffsetMs}
-                                        settingsKey={settingsKey}
-                                        translatedLyrics={showTranslation ? translatedLyrics : null}
-                                    />
-                                ) : (
-                                    <UnsynchronizedLyrics
-                                        {...(lyrics as UnsynchronizedLyricsProps)}
-                                        settingsKey={settingsKey}
-                                        translatedLyrics={showTranslation ? translatedLyrics : null}
-                                    />
-                                )}
+                                <div
+                                    className={clsx(styles.scrollContainer, {
+                                        [styles.scrollContainerSplit]:
+                                            lookupLayout === 'mobile-split' && !!selectedToken,
+                                    })}
+                                >
+                                    {synced ? (
+                                        <SynchronizedLyrics
+                                            {...(lyrics as SynchronizedLyricsProps)}
+                                            offsetMs={currentOffsetMs}
+                                            onSelectToken={
+                                                enabledDictionaryMap.size > 0
+                                                    ? handleLookupToken
+                                                    : undefined
+                                            }
+                                            settingsKey={settingsKey}
+                                            tokenizedLines={tokenizedLines}
+                                            translatedLyrics={
+                                                showTranslation ? translatedLyrics : null
+                                            }
+                                        />
+                                    ) : (
+                                        <UnsynchronizedLyrics
+                                            {...(lyrics as UnsynchronizedLyricsProps)}
+                                            onSelectToken={
+                                                enabledDictionaryMap.size > 0
+                                                    ? handleLookupToken
+                                                    : undefined
+                                            }
+                                            settingsKey={settingsKey}
+                                            tokenizedLines={tokenizedLines}
+                                            translatedLyrics={
+                                                showTranslation ? translatedLyrics : null
+                                            }
+                                        />
+                                    )}
+                                </div>
+                                {dictionaryPanel}
                             </motion.div>
                         )}
                     </AnimatePresence>
                 )}
+
                 {showActions && (
                     <div className={styles.actionsContainer}>
                         <LyricsActions

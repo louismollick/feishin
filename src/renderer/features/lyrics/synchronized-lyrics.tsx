@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import styles from './synchronized-lyrics.module.css';
 
 import { LyricLine } from '/@/renderer/features/lyrics/lyric-line';
+import { TokenizedLyricText } from '/@/renderer/features/lyrics/tokenized-lyric-text';
+import { TokenizedLyricLine, YomitanToken } from '/@/renderer/features/yomitan/core';
 import {
     useLyricsDisplaySettings,
     useLyricsSettings,
@@ -23,8 +25,10 @@ const mpris = isElectron() && utils?.isLinux() ? window.api.mpris : null;
 export interface SynchronizedLyricsProps extends Omit<FullLyricsMetadata, 'lyrics'> {
     lyrics: SynchronizedLyricsArray;
     offsetMs?: number;
+    onSelectToken?: (token: YomitanToken) => void;
     settingsKey?: string;
     style?: React.CSSProperties;
+    tokenizedLines?: TokenizedLyricLine[];
     translatedLyrics?: null | string;
 }
 
@@ -33,10 +37,12 @@ export const SynchronizedLyrics = ({
     lyrics,
     name,
     offsetMs,
+    onSelectToken,
     remote,
     settingsKey = 'default',
     source,
     style,
+    tokenizedLines,
     translatedLyrics,
 }: SynchronizedLyricsProps) => {
     const playbackType = usePlaybackType();
@@ -356,9 +362,18 @@ export const SynchronizedLyrics = ({
                             handleSeek(time / 1000);
                         }
                     }}
-                    text={
-                        text +
-                        (translatedLyrics ? `_BREAK_${translatedLyrics.split('\n')[idx]}` : '')
+                    renderedContent={
+                        tokenizedLines?.[idx] ? (
+                            <TokenizedLyricText
+                                onSelectToken={onSelectToken}
+                                tokens={tokenizedLines[idx].tokens}
+                            />
+                        ) : undefined
+                    }
+                    text={tokenizedLines?.[idx] ? undefined : text}
+                    translatedText={
+                        tokenizedLines?.[idx]?.translatedText ??
+                        (translatedLyrics ? translatedLyrics.split('\n')[idx] : undefined)
                     }
                 />
             ))}

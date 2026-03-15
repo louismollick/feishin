@@ -571,6 +571,7 @@ export const MobileFullscreenPlayer = () => {
                         <div className={styles.lyricsContent}>
                             <Lyrics
                                 fadeOutNoLyricsMessage={false}
+                                lookupLayout="mobile-split"
                                 showActions={false}
                                 showSettingsButton={false}
                             />

@@ -531,6 +531,11 @@ const LyricsDisplaySettingsSchema = z.object({
     gapUnsync: z.number(),
 });
 
+const YomitanDictionaryPreferenceSchema = z.object({
+    enabled: z.boolean(),
+    title: z.string(),
+});
+
 const LyricsSettingsSchema = z.object({
     alignment: z.enum(['center', 'left', 'right']),
     delayMs: z.number(),
@@ -545,6 +550,7 @@ const LyricsSettingsSchema = z.object({
     translationApiKey: z.string(),
     translationApiProvider: z.string().nullable(),
     translationTargetLanguage: z.string().nullable(),
+    yomitanDictionaries: z.array(YomitanDictionaryPreferenceSchema),
 });
 
 const ScrobbleSettingsSchema = z.object({
@@ -1773,6 +1779,7 @@ const initialState: SettingsState = {
         translationApiKey: '',
         translationApiProvider: '',
         translationTargetLanguage: 'en',
+        yomitanDictionaries: [],
     },
     lyricsDisplay: {
         default: {
@@ -2377,10 +2384,14 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     });
                 }
 
+                if (version <= 27 && state.lyrics && !('yomitanDictionaries' in state.lyrics)) {
+                    (state as any).lyrics.yomitanDictionaries = [];
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 26,
+            version: 27,
         },
     ),
 );

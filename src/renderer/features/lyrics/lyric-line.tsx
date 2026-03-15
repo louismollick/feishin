@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { ComponentPropsWithoutRef, memo, useMemo } from 'react';
+import { ComponentPropsWithoutRef, memo, ReactNode, useMemo } from 'react';
 
 import styles from './lyric-line.module.css';
 
@@ -9,11 +9,21 @@ import { Stack } from '/@/shared/components/stack/stack';
 interface LyricLineProps extends ComponentPropsWithoutRef<'div'> {
     alignment: 'center' | 'left' | 'right';
     fontSize: number;
-    text: string;
+    renderedContent?: ReactNode;
+    text?: string;
+    translatedText?: string;
 }
 
 export const LyricLine = memo(
-    ({ alignment, className, fontSize, text, ...props }: LyricLineProps) => {
+    ({
+        alignment,
+        className,
+        fontSize,
+        renderedContent,
+        text = '',
+        translatedText,
+        ...props
+    }: LyricLineProps) => {
         const lines = useMemo(() => text.split('_BREAK_'), [text]);
 
         const style = useMemo(
@@ -27,9 +37,14 @@ export const LyricLine = memo(
         return (
             <Box className={clsx(styles.lyricLine, className)} style={style} {...props}>
                 <Stack gap={0}>
-                    {lines.map((line, index) => (
-                        <span key={index}>{line}</span>
-                    ))}
+                    {renderedContent ? (
+                        <span className={styles.tokenizedContent}>{renderedContent}</span>
+                    ) : (
+                        lines.map((line, index) => <span key={index}>{line}</span>)
+                    )}
+                    {translatedText ? (
+                        <span className={styles.translatedLine}>{translatedText}</span>
+                    ) : null}
                 </Stack>
             </Box>
         );

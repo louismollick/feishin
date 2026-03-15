@@ -3,12 +3,16 @@ import { useMemo } from 'react';
 import styles from './unsynchronized-lyrics.module.css';
 
 import { LyricLine } from '/@/renderer/features/lyrics/lyric-line';
+import { TokenizedLyricText } from '/@/renderer/features/lyrics/tokenized-lyric-text';
+import { TokenizedLyricLine, YomitanToken } from '/@/renderer/features/yomitan/core';
 import { useLyricsDisplaySettings, useLyricsSettings } from '/@/renderer/store';
 import { FullLyricsMetadata } from '/@/shared/types/domain-types';
 
 export interface UnsynchronizedLyricsProps extends Omit<FullLyricsMetadata, 'lyrics'> {
     lyrics: string;
+    onSelectToken?: (token: YomitanToken) => void;
     settingsKey?: string;
+    tokenizedLines?: TokenizedLyricLine[];
     translatedLyrics?: null | string;
 }
 
@@ -16,9 +20,11 @@ export const UnsynchronizedLyrics = ({
     artist,
     lyrics,
     name,
+    onSelectToken,
     remote,
     settingsKey = 'default',
     source,
+    tokenizedLines,
     translatedLyrics,
 }: UnsynchronizedLyricsProps) => {
     const lyricsSettings = useLyricsSettings();
@@ -67,7 +73,16 @@ export const UnsynchronizedLyrics = ({
                     fontSize={settings.fontSizeUnsync}
                     id={`lyric-${idx}`}
                     key={idx}
-                    text={text + (translatedLines[idx] ? `_BREAK_${translatedLines[idx]}` : '')}
+                    renderedContent={
+                        tokenizedLines?.[idx] ? (
+                            <TokenizedLyricText
+                                onSelectToken={onSelectToken}
+                                tokens={tokenizedLines[idx].tokens}
+                            />
+                        ) : undefined
+                    }
+                    text={tokenizedLines?.[idx] ? undefined : text}
+                    translatedText={tokenizedLines?.[idx]?.translatedText ?? translatedLines[idx]}
                 />
             ))}
         </div>

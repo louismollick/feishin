@@ -1,0 +1,15 @@
+.results {
+    width: 100%;
+}
+
+.entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.entry {
+    position: relative;
+    width: 100%;
+}

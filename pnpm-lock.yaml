@@ -212,6 +212,9 @@ importers:
       ws:
         specifier: ^8.18.2
         version: 8.18.2
+      yomitan-core:
+        specifier: ^1.4.0
+        version: 1.4.0
       zod:
         specifier: ^3.22.3
         version: 3.25.76
@@ -1348,6 +1351,10 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
+  '@kbn/handlebars@https://codeload.github.com/yomidevs/yomitan-handlebars/tar.gz/12aff5e3550954d7d3a98a5917ff7d579f3cce25':
+    resolution: {tarball: https://codeload.github.com/yomidevs/yomitan-handlebars/tar.gz/12aff5e3550954d7d3a98a5917ff7d579f3cce25}
+    version: 1.0.0
+
   '@keyv/bigmap@1.2.0':
     resolution: {integrity: sha512-4Lme8NejkyetZ9oJ6u8NSf0iJEFFt7I+tyDI48wZlaFmbhDEh4nZg7bEPFPwCWkpIuL50/ukWBC9AHQTmdJLUA==}
     engines: {node: '>= 18'}
@@ -1731,6 +1738,10 @@ packages:
 
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
+
+  '@resvg/resvg-wasm@2.6.2':
+    resolution: {integrity: sha512-FqALmHI8D4o6lk/LRWDnhw95z5eO+eAa6ORjVg09YRR7BkcM6oPHU9uyC0gtQG5vpFLvgpeU4+zEAz2H8APHNw==}
+    engines: {node: '>= 10'}
 
   '@rolldown/pluginutils@1.0.0-beta.47':
     resolution: {integrity: sha512-8QagwMH3kNCuzD8EWL8R2YPW5e4OrHNSAHRFDdmFqEwEaD/KcNKjVoumo+gP2vW5eKB2UPbM6vTYiGZX0ixLnw==}
@@ -2129,6 +2140,10 @@ packages:
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
+
+  '@zip.js/zip.js@2.8.23':
+    resolution: {integrity: sha512-RB+RLnxPJFPrGvQ9rgO+4JOcsob6lD32OcF0QE0yg24oeW9q8KnTTNlugcDaIveEcCbclobJcZP+fLQ++sH0bw==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
@@ -2769,6 +2784,9 @@ packages:
   detect-node@2.1.0:
     resolution: {integrity: sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==}
 
+  dexie@4.3.0:
+    resolution: {integrity: sha512-5EeoQpJvMKHe6zWt/FSIIuRa3CWlZeIl6zKXt+Lz7BU6RoRRLgX9dZEynRfXrkLcldKYCBiz7xekTEylnie1Ug==}
+
   dir-compare@4.2.0:
     resolution: {integrity: sha512-2xMCmOoMrdQIPHdsTawECdNPwlVFB9zGcz3kuhmBO6U3oU+UQjsue0i8ayLKpgBcm+hcXPMVSGUN9d+pvJ6+VQ==}
 
@@ -3394,6 +3412,14 @@ packages:
   gulp-sort@2.0.0:
     resolution: {integrity: sha512-MyTel3FXOdh1qhw1yKhpimQrAmur9q1X0ZigLmCOxouQD+BD3za9/89O+HfbgBQvvh4igEbp0/PUWO+VqGYG1g==}
 
+  handlebars@4.7.8:
+    resolution: {integrity: sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ==}
+    engines: {node: '>=0.4.7'}
+    hasBin: true
+
+  hangul-js@0.2.6:
+    resolution: {integrity: sha512-48axU8LgjCD30FEs66Xc04/8knxMwCMQw0f67l67rlttW7VXT3qRJgQeHmhiuGwWXGvSbk6YM0fhQlcjE1JFQA==}
+
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
     engines: {node: '>= 0.4'}
@@ -3821,6 +3847,9 @@ packages:
   jszip@3.10.1:
     resolution: {integrity: sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g==}
 
+  kanji-processor@1.0.2:
+    resolution: {integrity: sha512-3nP/Sdt4BYLxqYv263EIXfA+m93N1o1vIxE4U3TzAuYlJT2BuSjncvqnOjcL/wrSNkMA+lBEMHHH477+KSYiBg==}
+
   keyboardevent-from-electron-accelerator@2.0.0:
     resolution: {integrity: sha512-iQcmNA0M4ETMNi0kG/q0h/43wZk7rMeKYrXP7sqKIJbHkTU8Koowgzv+ieR/vWJbOwxx5nDC3UnudZ0aLSu4VA==}
 
@@ -4132,6 +4161,9 @@ packages:
   negotiator@1.0.0:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
+
+  neo-async@2.6.2:
+    resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
   node-abi@4.26.0:
     resolution: {integrity: sha512-8QwIZqikRvDIkXS2S93LjzhsSPJuIbfaMETWH+Bx8oOT9Sa9UsUtBFQlc3gBNd1+QINjaTloitXr1W3dQLi9Iw==}
@@ -5433,6 +5465,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  uglify-js@3.19.3:
+    resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
+    engines: {node: '>=0.8.0'}
+    hasBin: true
+
   unbox-primitive@1.1.0:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
@@ -5723,6 +5760,9 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
+  wordwrap@1.0.0:
+    resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
+
   workbox-background-sync@7.3.0:
     resolution: {integrity: sha512-PCSk3eK7Mxeuyatb22pcSx9dlgWNv3+M8PqPaYDokks8Y5/FX4soaOqj3yhAZr5k6Q5JWTOMYgaJBpbw11G9Eg==}
 
@@ -5863,6 +5903,15 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  yomitan-core@1.4.0:
+    resolution: {integrity: sha512-JURr7rF3aBoLGELRoCJ9dhgD9Y0uAJAMdKP+wBBHjMxoaZpjl97gqLiK3T8N36WhuBpritxuXwl9MM9Rv01OxA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      linkedom: ^0.18.10
+    peerDependenciesMeta:
+      linkedom:
+        optional: true
 
   zod-validation-error@4.0.2:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
@@ -7108,6 +7157,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@kbn/handlebars@https://codeload.github.com/yomidevs/yomitan-handlebars/tar.gz/12aff5e3550954d7d3a98a5917ff7d579f3cce25': {}
+
   '@keyv/bigmap@1.2.0(keyv@5.5.4)':
     dependencies:
       hashery: 1.2.0
@@ -7481,6 +7532,9 @@ snapshots:
       '@types/react': 19.2.5
 
   '@radix-ui/rect@1.1.1': {}
+
+  '@resvg/resvg-wasm@2.6.2':
+    optional: true
 
   '@rolldown/pluginutils@1.0.0-beta.47': {}
 
@@ -7870,6 +7924,8 @@ snapshots:
       - utf-8-validate
 
   '@xmldom/xmldom@0.8.11': {}
+
+  '@zip.js/zip.js@2.8.23': {}
 
   abbrev@3.0.1: {}
 
@@ -8613,6 +8669,8 @@ snapshots:
 
   detect-node@2.1.0:
     optional: true
+
+  dexie@4.3.0: {}
 
   dir-compare@4.2.0:
     dependencies:
@@ -9495,6 +9553,18 @@ snapshots:
     dependencies:
       through2: 2.0.5
 
+  handlebars@4.7.8:
+    dependencies:
+      minimist: 1.2.8
+      neo-async: 2.6.2
+      source-map: 0.6.1
+      wordwrap: 1.0.0
+    optionalDependencies:
+      uglify-js: 3.19.3
+
+  hangul-js@0.2.6:
+    optional: true
+
   has-bigints@1.1.0: {}
 
   has-flag@4.0.0: {}
@@ -9906,6 +9976,9 @@ snapshots:
       readable-stream: 2.3.8
       setimmediate: 1.0.5
 
+  kanji-processor@1.0.2:
+    optional: true
+
   keyboardevent-from-electron-accelerator@2.0.0: {}
 
   keyboardevents-areequal@0.2.2: {}
@@ -10176,6 +10249,8 @@ snapshots:
   natural-orderby@5.0.0: {}
 
   negotiator@1.0.0: {}
+
+  neo-async@2.6.2: {}
 
   node-abi@4.26.0:
     dependencies:
@@ -11563,6 +11638,9 @@ snapshots:
 
   typescript@5.8.3: {}
 
+  uglify-js@3.19.3:
+    optional: true
+
   unbox-primitive@1.1.0:
     dependencies:
       call-bound: 1.0.4
@@ -11856,6 +11934,8 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
+  wordwrap@1.0.0: {}
+
   workbox-background-sync@7.3.0:
     dependencies:
       idb: 7.1.1
@@ -12034,6 +12114,18 @@ snapshots:
       fd-slicer: 1.1.0
 
   yocto-queue@0.1.0: {}
+
+  yomitan-core@1.4.0:
+    dependencies:
+      '@zip.js/zip.js': 2.8.23
+      ajv: 8.18.0
+      dexie: 4.3.0
+      handlebars: 4.7.8
+      yomitan-handlebars: '@kbn/handlebars@https://codeload.github.com/yomidevs/yomitan-handlebars/tar.gz/12aff5e3550954d7d3a98a5917ff7d579f3cce25'
+    optionalDependencies:
+      '@resvg/resvg-wasm': 2.6.2
+      hangul-js: 0.2.6
+      kanji-processor: 1.0.2
 
   zod-validation-error@4.0.2(zod@3.25.76):
     dependencies:

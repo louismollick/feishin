@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { languages } from '/@/i18n/i18n';
+import { YomitanDictionarySettings } from '/@/renderer/features/settings/components/general/yomitan-dictionary-settings';
 import {
     SettingOption,
     SettingsSection,
@@ -207,6 +208,7 @@ export const LyricSettings = memo(() => {
 
     return (
         <SettingsSection
+            extra={<YomitanDictionarySettings />}
             options={lyricOptions}
             title={t('page.setting.lyrics', { postProcess: 'sentenceCase' })}
         />
