@@ -205,6 +205,28 @@
     padding: 1rem;
 }
 
+.lyrics-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.5rem;
+}
+
+.lyrics-header-controls,
+.lyrics-header-controls-end {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lyrics-header-controls-end {
+    justify-content: flex-end;
+    min-width: 2.5rem;
+}
+
+.lyrics-header-title {
+    text-align: center;
+}
+
 .queue-content,
 .lyrics-content {
     flex: 1 1 auto;
