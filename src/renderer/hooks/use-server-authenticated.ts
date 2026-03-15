@@ -316,7 +316,6 @@ export const useServerAuthenticated = () => {
                     if (await hasOfflineContent()) {
                         await useOfflineStoreBase.getState().actions.setOfflineMode(true);
                         setReady(AuthState.VALID);
-                        navigate(AppRoute.DOWNLOADS, { replace: true });
                         return;
                     }
 

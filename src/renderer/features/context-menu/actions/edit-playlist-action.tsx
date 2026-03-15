@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { openUpdatePlaylistModal } from '/@/renderer/features/playlists/components/update-playlist-modal';
 import { ContextMenu } from '/@/shared/components/context-menu/context-menu';
 import { Playlist } from '/@/shared/types/domain-types';
@@ -12,6 +13,7 @@ interface EditPlaylistActionProps {
 
 export const EditPlaylistAction = ({ disabled, items }: EditPlaylistActionProps) => {
     const { t } = useTranslation();
+    const { canMutate } = useOfflineReadOnly();
 
     const handleEditPlaylist = useCallback(async () => {
         if (items.length === 0) return;
@@ -26,7 +28,11 @@ export const EditPlaylistAction = ({ disabled, items }: EditPlaylistActionProps)
     if (items.length === 0 || items.length > 1) return null;
 
     return (
-        <ContextMenu.Item disabled={disabled} leftIcon="edit" onSelect={handleEditPlaylist}>
+        <ContextMenu.Item
+            disabled={disabled || !canMutate}
+            leftIcon="edit"
+            onSelect={handleEditPlaylist}
+        >
             {t('action.editPlaylist', { postProcess: 'sentenceCase' })}
         </ContextMenu.Item>
     );

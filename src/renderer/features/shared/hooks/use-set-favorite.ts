@@ -1,5 +1,9 @@
 import { useCallback } from 'react';
 
+import {
+    isOfflineReadOnly,
+    showOfflineReadOnlyToast,
+} from '/@/renderer/features/offline/offline-capabilities';
 import { useCreateFavorite } from '/@/renderer/features/shared/mutations/create-favorite-mutation';
 import { useDeleteFavorite } from '/@/renderer/features/shared/mutations/delete-favorite-mutation';
 import { LibraryItem } from '/@/shared/types/domain-types';
@@ -10,6 +14,11 @@ export const useSetFavorite = () => {
 
     const setFavorite = useCallback(
         (serverId: string, id: string[], itemType: LibraryItem, isFavorite: boolean) => {
+            if (isOfflineReadOnly()) {
+                showOfflineReadOnlyToast();
+                return;
+            }
+
             if (isFavorite) {
                 createFavoriteMutation.mutate({
                     apiClientProps: { serverId },

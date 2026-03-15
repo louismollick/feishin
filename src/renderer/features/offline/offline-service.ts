@@ -6,6 +6,7 @@ import {
     getOfflineArtworkId,
     getOfflineJobId,
     getOfflineLyricsId,
+    getOfflinePlaylistId,
     getOfflineTrackId,
     offlineDb,
 } from '/@/renderer/features/offline/offline-db';
@@ -16,6 +17,7 @@ import {
     OfflineArtworkRecord,
     OfflineDownloadJob,
     OfflineLyricsRecord,
+    OfflinePlaylistRecord,
     OfflineSourceRef,
     OfflineTrackRecord,
     QueueSong,
@@ -106,6 +108,8 @@ const getPlaylistSongsById = async (serverId: string, ids: string[]) => {
     const allSongs: Song[] = [];
 
     for (const id of ids) {
+        await ensureOfflinePlaylistRecord(serverId, id).catch(() => null);
+
         const response = await queryClient.fetchQuery({
             gcTime: 1000 * 60,
             queryFn: ({ signal }) =>
@@ -125,6 +129,50 @@ const getPlaylistSongsById = async (serverId: string, ids: string[]) => {
         startIndex: 0,
         totalRecordCount: allSongs.length,
     } satisfies SongListResponse;
+};
+
+const ensureOfflinePlaylistRecord = async (serverId: string, playlistId: string) => {
+    const id = getOfflinePlaylistId(serverId, playlistId);
+    const existing = await offlineDb.playlists.get(id);
+
+    if (existing) {
+        return existing;
+    }
+
+    const [playlist, playlistSongs] = await Promise.all([
+        queryClient.fetchQuery({
+            gcTime: 1000 * 60,
+            queryFn: ({ signal }) =>
+                api.controller.getPlaylistDetail({
+                    apiClientProps: { serverId, signal },
+                    query: { id: playlistId },
+                }),
+            queryKey: queryKeys.playlists.detail(serverId, playlistId, { id: playlistId }),
+            staleTime: 1000 * 60,
+        }),
+        queryClient.fetchQuery({
+            gcTime: 1000 * 60,
+            queryFn: ({ signal }) =>
+                api.controller.getPlaylistSongList({
+                    apiClientProps: { serverId, signal },
+                    query: { id: playlistId },
+                }),
+            queryKey: queryKeys.playlists.songList(serverId, playlistId),
+            staleTime: 1000 * 60,
+        }),
+    ]);
+
+    const record: OfflinePlaylistRecord = {
+        downloadedAt: getNowIso(),
+        id,
+        playlist,
+        playlistId,
+        serverId,
+        songIds: playlistSongs.items.map((song) => song.id),
+    };
+
+    await offlineDb.playlists.put(record);
+    return record;
 };
 
 const getSongsByFolder = async (serverId: string, ids: string[]) => {

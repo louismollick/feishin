@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { useDeletePlaylist } from '/@/renderer/features/playlists/mutations/delete-playlist-mutation';
 import { AppRoute } from '/@/renderer/router/routes';
 import { useCurrentServerId } from '/@/renderer/store';
@@ -22,6 +23,7 @@ export const DeletePlaylistAction = ({ disabled, items }: DeletePlaylistActionPr
     const navigate = useNavigate();
     const serverId = useCurrentServerId();
     const deletePlaylistMutation = useDeletePlaylist({});
+    const { canMutate } = useOfflineReadOnly();
 
     const handleDeletePlaylist = useCallback(async () => {
         if (items.length === 0 || !serverId) return;
@@ -66,7 +68,11 @@ export const DeletePlaylistAction = ({ disabled, items }: DeletePlaylistActionPr
     if (items.length === 0) return null;
 
     return (
-        <ContextMenu.Item disabled={disabled} leftIcon="remove" onSelect={openDeletePlaylistModal}>
+        <ContextMenu.Item
+            disabled={disabled || !canMutate}
+            leftIcon="remove"
+            onSelect={openDeletePlaylistModal}
+        >
             {t('action.deletePlaylist', { postProcess: 'sentenceCase' })}
         </ContextMenu.Item>
     );

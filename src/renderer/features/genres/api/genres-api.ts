@@ -2,6 +2,11 @@ import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
+import {
+    getOfflineGenreList,
+    resolveOfflineQuery,
+    shouldUseOfflineQuery,
+} from '/@/renderer/features/offline/offline-read';
 import { QueryHookArgs } from '/@/renderer/lib/react-query';
 import { useCurrentServerId } from '/@/renderer/store';
 import {
@@ -13,15 +18,23 @@ import {
 
 export const genresQueries = {
     list: (args: QueryHookArgs<GenreListQuery>) => {
+        const queryKey = queryKeys.genres.list(args.serverId, args.query);
+
         return queryOptions({
             gcTime: 1000 * 60 * 60,
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineGenreList(args.serverId, args.query),
+                    );
+                }
+
                 return api.controller.getGenreList({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: args.query,
                 });
             },
-            queryKey: queryKeys.genres.list(args.serverId, args.query),
+            queryKey,
             staleTime: 1000 * 60 * 60,
             ...args.options,
         });
@@ -29,7 +42,12 @@ export const genresQueries = {
     listCount: (args: QueryHookArgs<ListCountQuery<GenreListQuery>>) => {
         return queryOptions({
             gcTime: 1000 * 60 * 60,
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    const response = await getOfflineGenreList(args.serverId, args.query);
+                    return response.totalRecordCount ?? 0;
+                }
+
                 return api.controller
                     .getGenreList({
                         apiClientProps: { serverId: args.serverId, signal },

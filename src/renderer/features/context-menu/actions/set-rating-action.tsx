@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { useSetRating } from '/@/renderer/features/shared/hooks/use-set-rating';
 import { useCurrentServer, useCurrentServerId, useShowRatings } from '/@/renderer/store';
 import { ContextMenu } from '/@/shared/components/context-menu/context-menu';
@@ -18,6 +19,7 @@ export const SetRatingAction = ({ ids, itemType }: SetRatingActionProps) => {
     const server = useCurrentServer();
     const serverId = useCurrentServerId();
     const showRatings = useShowRatings();
+    const { canMutate } = useOfflineReadOnly();
 
     const setRating = useSetRating();
 
@@ -37,6 +39,7 @@ export const SetRatingAction = ({ ids, itemType }: SetRatingActionProps) => {
         <ContextMenu.Submenu>
             <ContextMenu.SubmenuTarget>
                 <ContextMenu.Item
+                    disabled={!canMutate}
                     leftIcon="star"
                     onSelect={(e) => e.preventDefault()}
                     rightIcon="arrowRightS"
@@ -45,22 +48,22 @@ export const SetRatingAction = ({ ids, itemType }: SetRatingActionProps) => {
                 </ContextMenu.Item>
             </ContextMenu.SubmenuTarget>
             <ContextMenu.SubmenuContent>
-                <ContextMenu.Item onSelect={() => onRating(0)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(0)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={0} />
                 </ContextMenu.Item>
-                <ContextMenu.Item onSelect={() => onRating(1)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(1)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={1} />
                 </ContextMenu.Item>
-                <ContextMenu.Item onSelect={() => onRating(2)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(2)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={2} />
                 </ContextMenu.Item>
-                <ContextMenu.Item onSelect={() => onRating(3)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(3)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={3} />
                 </ContextMenu.Item>
-                <ContextMenu.Item onSelect={() => onRating(4)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(4)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={4} />
                 </ContextMenu.Item>
-                <ContextMenu.Item onSelect={() => onRating(5)}>
+                <ContextMenu.Item disabled={!canMutate} onSelect={() => onRating(5)}>
                     <Rating preventDefault={false} readOnly stopPropagation={false} value={5} />
                 </ContextMenu.Item>
             </ContextMenu.SubmenuContent>

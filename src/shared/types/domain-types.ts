@@ -1285,6 +1285,15 @@ export type OfflineLyricsRecord = {
     songId: string;
 };
 
+export type OfflinePlaylistRecord = {
+    downloadedAt: string;
+    id: string;
+    playlist: Playlist;
+    playlistId: string;
+    serverId: string;
+    songIds: string[];
+};
+
 export type OfflineSourceRef = {
     id: string;
     type:

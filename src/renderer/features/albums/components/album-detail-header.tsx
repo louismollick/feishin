@@ -9,6 +9,7 @@ import { queryKeys } from '/@/renderer/api/query-keys';
 import { albumQueries } from '/@/renderer/features/albums/api/album-api';
 import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { getOfflineSongsForItem } from '/@/renderer/features/offline/offline-read';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
     LibraryHeader,
@@ -83,8 +84,16 @@ export const AlbumDetailHeader = forwardRef<HTMLDivElement>((_props, ref) => {
           }
         : undefined;
 
-    const handlePlay = (type?: Play) => {
+    const handlePlay = async (type?: Play) => {
         if (!server?.id || !albumId) return;
+
+        const offlineSongs = await getOfflineSongsForItem(server.id, [albumId], LibraryItem.ALBUM);
+
+        if (offlineSongs.length > 0) {
+            addToQueueByData(offlineSongs, type || playButtonBehavior);
+            return;
+        }
+
         addToQueueByFetch(server.id, [albumId], LibraryItem.ALBUM, type || playButtonBehavior);
     };
 

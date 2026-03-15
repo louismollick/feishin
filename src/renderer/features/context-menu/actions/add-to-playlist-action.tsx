@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import {
     getAlbumArtistSongsById,
     getAlbumSongsById,
@@ -34,6 +35,7 @@ interface AddToPlaylistActionProps {
 
 export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProps) => {
     const { t } = useTranslation();
+    const { canMutate } = useOfflineReadOnly();
     const server = useCurrentServer();
     const serverId = useCurrentServerId();
     const queryClient = useQueryClient();
@@ -166,7 +168,7 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
 
     const handleAddToPlaylist = useCallback(
         async (playlistId: string) => {
-            if (items.length === 0 || !serverId) return;
+            if (!canMutate || items.length === 0 || !serverId) return;
 
             try {
                 let allSongIds: string[] = [];
@@ -292,6 +294,7 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
         },
         [
             addToPlaylistMutation,
+            canMutate,
             getSongsByAlbum,
             getSongsByArtist,
             getSongsByFolderLocal,
@@ -391,6 +394,7 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
         <ContextMenu.Submenu isCloseDisabled>
             <ContextMenu.SubmenuTarget>
                 <ContextMenu.Item
+                    disabled={!canMutate}
                     leftIcon="playlist"
                     onSelect={handleOpenModal}
                     rightIcon="arrowRightS"
@@ -412,6 +416,7 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
                 {recentPlaylist && (
                     <>
                         <ContextMenu.Item
+                            disabled={!canMutate}
                             key={recentPlaylist.id}
                             onSelect={() => handleAddToPlaylist(recentPlaylist.id)}
                         >
@@ -427,6 +432,7 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
                 )}
                 {filteredPlaylists.map((playlist) => (
                     <ContextMenu.Item
+                        disabled={!canMutate}
                         key={playlist.id}
                         onSelect={() => handleAddToPlaylist(playlist.id)}
                     >

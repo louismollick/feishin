@@ -21,7 +21,13 @@
         <title>Feishin</title>
         <% if (web) { %>
         <link rel="icon" href="./assets/favicon.ico" />
-        <script src="settings.js"></script>
+        <script>
+            (function () {
+                var s = document.createElement('script');
+                s.src = 'settings.js';
+                document.head.appendChild(s);
+            })();
+        </script>
         <% } %>
     </head>
 

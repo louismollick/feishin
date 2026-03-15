@@ -5,6 +5,7 @@ import { getTitlePath } from '/@/renderer/components/item-list/helpers/get-title
 import { ItemListStateItemWithRequiredProperties } from '/@/renderer/components/item-list/helpers/item-list-state';
 import { DefaultItemControlProps, ItemControls } from '/@/renderer/components/item-list/types';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { getOfflineSongsForItem } from '/@/renderer/features/offline/offline-read';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { useSetFavorite } from '/@/renderer/features/shared/hooks/use-set-favorite';
 import { useSetRating } from '/@/renderer/features/shared/hooks/use-set-rating';
@@ -394,7 +395,18 @@ export const useDefaultItemListControls = (args?: UseDefaultItemListControlsArgs
                     return;
                 }
 
-                player.addToQueueByFetch(item._serverId, [item.id], itemType, playType);
+                getOfflineSongsForItem(item._serverId, [item.id], itemType)
+                    .then((offlineSongs) => {
+                        if (offlineSongs.length > 0) {
+                            player.addToQueueByData(offlineSongs, playType);
+                            return;
+                        }
+
+                        player.addToQueueByFetch(item._serverId, [item.id], itemType, playType);
+                    })
+                    .catch(() => {
+                        player.addToQueueByFetch(item._serverId, [item.id], itemType, playType);
+                    });
             },
 
             onRating: ({

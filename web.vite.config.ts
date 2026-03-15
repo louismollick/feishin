@@ -134,6 +134,7 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 clientsClaim: true,
                 maximumFileSizeToCacheInBytes: 1000000 * 5, // 5 MB
+                navigateFallback: 'index.html',
                 skipWaiting: true,
             },
         }),

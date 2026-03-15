@@ -4,6 +4,7 @@ import { CSSProperties, memo, ReactNode, useCallback, useRef, useState } from 'r
 
 import styles from './library-header-bar.module.css';
 
+import { getOfflineSongsForItem, getOfflineSongsForListQuery } from '/@/renderer/features/offline/offline-read';
 import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
 import { DefaultPlayButton } from '/@/renderer/features/shared/components/play-button';
 import { PlayButtonGroupPopover } from '/@/renderer/features/shared/components/play-button-group';
@@ -57,11 +58,23 @@ const HeaderPlayButton = ({
     const player = usePlayer();
 
     const handlePlay = useCallback(
-        (playType: Play) => {
+        async (playType: Play) => {
             if (listQuery) {
-                player.addToQueueByListQuery(serverId, listQuery, itemType, playType);
+                const offlineSongs = await getOfflineSongsForListQuery(serverId, itemType, listQuery);
+
+                if (offlineSongs.length > 0) {
+                    player.addToQueueByData(offlineSongs, playType);
+                } else {
+                    player.addToQueueByListQuery(serverId, listQuery, itemType, playType);
+                }
             } else if (ids) {
-                player.addToQueueByFetch(serverId, ids, itemType, playType);
+                const offlineSongs = await getOfflineSongsForItem(serverId, ids, itemType);
+
+                if (offlineSongs.length > 0) {
+                    player.addToQueueByData(offlineSongs, playType);
+                } else {
+                    player.addToQueueByFetch(serverId, ids, itemType, playType);
+                }
             } else if (songs) {
                 player.addToQueueByData(songs, playType);
             }

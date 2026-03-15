@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { useCallback, useEffect, useState, WheelEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { PopoverPlayQueue } from '/@/renderer/features/now-playing/components/popover-play-queue';
 import { PlayerConfig } from '/@/renderer/features/player/components/player-config';
 import { CustomPlayerbarSlider } from '/@/renderer/features/player/components/playerbar-slider';
@@ -216,6 +217,7 @@ const LyricsButton = () => {
 const FavoriteButton = () => {
     const currentSong = usePlayerSong();
     const { bindings } = useHotkeySettings();
+    const { canMutate } = useOfflineReadOnly();
 
     const addToFavoritesMutation = useCreateFavorite({});
     const removeFromFavoritesMutation = useDeleteFavorite({});
@@ -277,6 +279,7 @@ const FavoriteButton = () => {
 
     return (
         <ActionIcon
+            disabled={!canMutate}
             icon="favorite"
             iconProps={{
                 fill: currentSong?.userFavorite ? 'primary' : undefined,
@@ -332,6 +335,7 @@ const RatingButton = () => {
     const server = useCurrentServer();
     const currentSong = usePlayerSong();
     const setRating = useSetRating();
+    const { canMutate } = useOfflineReadOnly();
 
     const isSongDefined = Boolean(currentSong?.id);
     const showRating =
@@ -360,6 +364,7 @@ const RatingButton = () => {
             {showRating && (
                 <Rating
                     onChange={handleUpdateRating}
+                    readOnly={!canMutate}
                     size="xs"
                     value={currentSong?.userRating || 0}
                 />
