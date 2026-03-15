@@ -42,6 +42,12 @@ export const MobilePlayerbar = () => {
 
     const handleToggleFullScreenPlayer = (e?: KeyboardEvent | MouseEvent<HTMLDivElement>) => {
         e?.stopPropagation();
+        if (isFullScreenPlayerExpanded && activeTab === 'lyrics') {
+            setStore({ activeTab: 'player' });
+            setFullScreenPlayerStore({ expanded: true });
+            return;
+        }
+
         // Set active tab to player when opening fullscreen player
         setStore({ activeTab: 'player' });
         setFullScreenPlayerStore({ expanded: !isFullScreenPlayerExpanded });
@@ -49,6 +55,13 @@ export const MobilePlayerbar = () => {
 
     const handleOpenLyrics = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
+
+        if (isFullScreenPlayerExpanded && activeTab === 'lyrics') {
+            setStore({ activeTab: 'player' });
+            setFullScreenPlayerStore({ expanded: false });
+            return;
+        }
+
         setStore({ activeTab: 'lyrics' });
         setFullScreenPlayerStore({ expanded: true });
     };
