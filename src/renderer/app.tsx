@@ -11,6 +11,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import i18n from '/@/i18n/i18n';
 import { OfflineBootstrap } from '/@/renderer/features/offline/offline-bootstrap';
+import { PwaUpdateToast } from '/@/renderer/features/pwa/pwa-update-toast';
 import { openSettingsModal } from '/@/renderer/features/settings/utils/open-settings-modal';
 import { WebAudioContext } from '/@/renderer/features/player/context/webaudio-context';
 import { useCheckForUpdates } from '/@/renderer/hooks/use-check-for-updates';
@@ -117,6 +118,7 @@ export const App = () => {
                 styles={notificationStyles}
                 zIndex={50000}
             />
+            <PwaUpdateToast />
             <OfflineBootstrap />
             <WebAudioContext.Provider value={webAudioProvider}>
                 <PlayerProvider>
