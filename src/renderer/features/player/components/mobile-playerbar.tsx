@@ -31,7 +31,7 @@ import { PlayerStatus } from '/@/shared/types/types';
 
 export const MobilePlayerbar = () => {
     const { t } = useTranslation();
-    const { activeTab, expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
+    const { expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
     const setFullScreenPlayerStore = useSetFullScreenPlayerStore();
     const { setStore } = useFullScreenPlayerStoreActions();
     const currentSong = usePlayerSong();
@@ -47,12 +47,6 @@ export const MobilePlayerbar = () => {
         // Set active tab to player when opening fullscreen player
         setStore({ activeTab: 'player' });
         setFullScreenPlayerStore({ expanded: !isFullScreenPlayerExpanded });
-    };
-
-    const handleOpenLyrics = (e: MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation();
-        setStore({ activeTab: 'lyrics' });
-        setFullScreenPlayerStore({ expanded: true });
     };
 
     const handleToggleContextMenu = (e: MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
@@ -210,25 +204,6 @@ export const MobilePlayerbar = () => {
                 </LayoutGroup>
             </div>
             <div className={styles.controlsWrapper}>
-                <PlayerButton
-                    icon={
-                        <Icon
-                            fill={
-                                activeTab === 'lyrics' && isFullScreenPlayerExpanded
-                                    ? 'primary'
-                                    : 'default'
-                            }
-                            icon="microphone"
-                            size="md"
-                        />
-                    }
-                    onClick={handleOpenLyrics}
-                    tooltip={{
-                        label: t('player.lyrics', { postProcess: 'sentenceCase' }),
-                        openDelay: 0,
-                    }}
-                    variant="tertiary"
-                />
                 <PlayerButton
                     icon={<Icon fill="default" icon="mediaPrevious" size="md" />}
                     onClick={(e) => {
