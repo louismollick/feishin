@@ -36,6 +36,7 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
         visualizerExpanded: isFullScreenVisualizerExpanded,
     } = useFullScreenPlayerStore();
     const { windowBarStyle } = useWindowSettings();
+    const isLyricsOverlayOpen = isFullScreenPlayerExpanded && activeTab === 'lyrics';
 
     return (
         <>
@@ -57,7 +58,11 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
                         variant="subtle"
                     />
                 )}
-                <main className={styles.mainContent}>
+                <main
+                    className={clsx(styles.mainContent, {
+                        [styles.mainContentLocked]: isLyricsOverlayOpen,
+                    })}
+                >
                     <Outlet />
                 </main>
                 <PlayerBar />

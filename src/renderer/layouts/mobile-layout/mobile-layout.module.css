@@ -46,6 +46,11 @@
     -webkit-overflow-scrolling: touch;
 }
 
+.main-content-locked {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 .full-screen-player-overlay {
     position: fixed;
     top: 0;

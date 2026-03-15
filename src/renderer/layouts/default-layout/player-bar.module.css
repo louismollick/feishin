@@ -16,6 +16,7 @@
 
 .locked {
     overscroll-behavior: none;
+    touch-action: none;
 }
 
 .open-drawer {
