@@ -38,9 +38,16 @@ import { LyricsOverride } from '/@/shared/types/domain-types';
 type LyricsProps = {
     fadeOutNoLyricsMessage?: boolean;
     settingsKey?: string;
+    showActions?: boolean;
+    showSettingsButton?: boolean;
 };
 
-export const Lyrics = ({ fadeOutNoLyricsMessage = true, settingsKey = 'default' }: LyricsProps) => {
+export const Lyrics = ({
+    fadeOutNoLyricsMessage = true,
+    settingsKey = 'default',
+    showActions = true,
+    showSettingsButton = true,
+}: LyricsProps) => {
     const currentSong = usePlayerSong();
     const {
         enableAutoTranslation,
@@ -279,16 +286,18 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true, settingsKey = 'default' 
     return (
         <ComponentErrorBoundary>
             <div className={styles.lyricsContainer}>
-                <ActionIcon
-                    className={styles.settingsIcon}
-                    icon="settings2"
-                    iconProps={{ size: 'lg' }}
-                    onClick={handleOpenSettings}
-                    pos="absolute"
-                    right={0}
-                    top={0}
-                    variant="subtle"
-                />
+                {showSettingsButton && (
+                    <ActionIcon
+                        className={styles.settingsIcon}
+                        icon="settings2"
+                        iconProps={{ size: 'lg' }}
+                        onClick={handleOpenSettings}
+                        pos="absolute"
+                        right={0}
+                        top={0}
+                        variant="subtle"
+                    />
+                )}
                 {isLoadingLyrics ? (
                     <Spinner container />
                 ) : (
@@ -334,25 +343,26 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true, settingsKey = 'default' 
                         )}
                     </AnimatePresence>
                 )}
-                <div className={styles.actionsContainer}>
-                    <LyricsActions
-                        hasLyrics={!!lyrics}
-                        index={indexToUse}
-                        languages={languages}
-                        offsetMs={currentOffsetMs}
-                        onExportLyrics={handleExportLyrics}
-                        onRemoveLyric={handleOnRemoveLyric}
-                        onSearchOverride={handleOnSearchOverride}
-                        onTranslateLyric={
-                            translationApiProvider && translationApiKey
-                                ? handleOnTranslateLyric
-                                : undefined
-                        }
-                        onUpdateOffset={handleUpdateOffset}
-                        setIndex={setIndex}
-                        settingsKey={settingsKey}
-                    />
-                </div>
+                {showActions && (
+                    <div className={styles.actionsContainer}>
+                        <LyricsActions
+                            hasLyrics={!!lyrics}
+                            index={indexToUse}
+                            languages={languages}
+                            offsetMs={currentOffsetMs}
+                            onExportLyrics={handleExportLyrics}
+                            onRemoveLyric={handleOnRemoveLyric}
+                            onSearchOverride={handleOnSearchOverride}
+                            onTranslateLyric={
+                                translationApiProvider && translationApiKey
+                                    ? handleOnTranslateLyric
+                                    : undefined
+                            }
+                            onUpdateOffset={handleUpdateOffset}
+                            setIndex={setIndex}
+                        />
+                    </div>
+                )}
             </div>
         </ComponentErrorBoundary>
     );

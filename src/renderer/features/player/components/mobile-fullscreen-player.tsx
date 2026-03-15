@@ -21,7 +21,10 @@ import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queu
 import { MobileFullscreenPlayerAlbumArt } from '/@/renderer/features/player/components/mobile-fullscreen-player-album-art';
 import { MobileFullscreenPlayerBottomControls } from '/@/renderer/features/player/components/mobile-fullscreen-player-bottom-controls';
 import { MobileFullscreenPlayerControls } from '/@/renderer/features/player/components/mobile-fullscreen-player-controls';
-import { MobileFullscreenPlayerHeader } from '/@/renderer/features/player/components/mobile-fullscreen-player-header';
+import {
+    MobileFullscreenPlayerHeader,
+    MobileFullscreenPlayerSettingsButton,
+} from '/@/renderer/features/player/components/mobile-fullscreen-player-header';
 import { MobileFullscreenPlayerMetadata } from '/@/renderer/features/player/components/mobile-fullscreen-player-metadata';
 import { MobileFullscreenPlayerProgress } from '/@/renderer/features/player/components/mobile-fullscreen-player-progress';
 import {
@@ -538,25 +541,39 @@ export const MobileFullscreenPlayer = () => {
                         transition={{ duration: 0.3, ease: 'easeInOut' }}
                     >
                         <div className={styles.lyricsHeader}>
-                            <ActionIcon
-                                icon="arrowDownS"
-                                onClick={handleToggleFullScreenPlayer}
-                                size="sm"
-                                variant={isPageHovered ? 'default' : 'subtle'}
-                            />
-                            <Text fw={600} size="lg">
-                                {t('page.fullscreenPlayer.lyrics', { postProcess: 'sentenceCase' })}
+                            <div className={styles.lyricsHeaderControls}>
+                                <ActionIcon
+                                    icon="arrowDownS"
+                                    onClick={handleToggleFullScreenPlayer}
+                                    size="sm"
+                                    variant={isPageHovered ? 'default' : 'subtle'}
+                                />
+                                <MobileFullscreenPlayerSettingsButton
+                                    isPageHovered={isPageHovered}
+                                    showLyricsExport
+                                />
+                            </div>
+                            <Text className={styles.lyricsHeaderTitle} fw={600} size="lg">
+                                {t('page.fullscreenPlayer.lyrics', {
+                                    postProcess: 'sentenceCase',
+                                })}
                             </Text>
-                            <ActionIcon
-                                icon="x"
-                                iconProps={{ size: 'xl' }}
-                                onClick={handleToggleLyrics}
-                                size="sm"
-                                variant={isPageHovered ? 'default' : 'subtle'}
-                            />
+                            <div className={styles.lyricsHeaderControlsEnd}>
+                                <ActionIcon
+                                    icon="x"
+                                    iconProps={{ size: 'xl' }}
+                                    onClick={handleToggleLyrics}
+                                    size="sm"
+                                    variant={isPageHovered ? 'default' : 'subtle'}
+                                />
+                            </div>
                         </div>
                         <div className={styles.lyricsContent}>
-                            <Lyrics fadeOutNoLyricsMessage={false} />
+                            <Lyrics
+                                fadeOutNoLyricsMessage={false}
+                                showActions={false}
+                                showSettingsButton={false}
+                            />
                         </div>
                     </motion.div>
                 )}

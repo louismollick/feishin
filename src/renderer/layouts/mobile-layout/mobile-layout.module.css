@@ -55,3 +55,7 @@
     z-index: 200;
     overflow: hidden;
 }
+
+.full-screen-player-overlay-with-playerbar {
+    bottom: 90px;
+}

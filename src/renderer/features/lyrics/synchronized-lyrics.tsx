@@ -50,7 +50,7 @@ export const SynchronizedLyrics = ({
                 : 24,
         gap: displaySettings.gap && displaySettings.gap !== 0 ? displaySettings.gap : 24,
     };
-    const { mediaSeekToTimestamp } = usePlayerActions();
+    const { mediaSeekToTimestamp, setTimestamp } = usePlayerActions();
     const status = usePlayerStatus();
     const timestamp = usePlayerTimestamp();
 
@@ -59,13 +59,14 @@ export const SynchronizedLyrics = ({
     const handleSeek = useCallback(
         (time: number) => {
             if (playbackType === PlayerType.LOCAL && mpvPlayer) {
+                setTimestamp(time);
                 mpvPlayer.seekTo(time);
             } else {
                 mpris?.updateSeek(time);
                 mediaSeekToTimestamp(time);
             }
         },
-        [mediaSeekToTimestamp, playbackType],
+        [mediaSeekToTimestamp, playbackType, setTimestamp],
     );
 
     // const seeked = useSeeked();
@@ -84,6 +85,7 @@ export const SynchronizedLyrics = ({
 
     const delayMsRef = useRef(effectiveOffsetMs);
     const followRef = useRef(settings.follow);
+    const statusRef = useRef(status);
     const userScrollingRef = useRef(false);
     const scrollTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -93,7 +95,7 @@ export const SynchronizedLyrics = ({
         if (lyricRef.current) {
             const activeLyrics = lyricRef.current;
             for (let idx = 0; idx < activeLyrics.length; idx += 1) {
-                if (timeInMs <= activeLyrics[idx][0]) {
+                if (timeInMs < activeLyrics[idx][0]) {
                     return idx === 0 ? idx : idx - 1;
                 }
             }
@@ -105,11 +107,11 @@ export const SynchronizedLyrics = ({
     };
 
     const setCurrentLyricRef = useRef<
-        (timeInMs: number, epoch?: number, targetIndex?: number) => void
+        (timeInMs: number, epoch?: number, targetIndex?: number, scheduleNext?: boolean) => void
     >(() => {});
 
     const setCurrentLyric = useCallback(
-        (timeInMs: number, epoch?: number, targetIndex?: number) => {
+        (timeInMs: number, epoch?: number, targetIndex?: number, scheduleNext: boolean = true) => {
             const start = performance.now();
             let nextEpoch: number;
 
@@ -162,7 +164,11 @@ export const SynchronizedLyrics = ({
                 }, 600);
             }
 
-            if (index !== lyricRef.current!.length - 1) {
+            if (
+                scheduleNext &&
+                statusRef.current === PlayerStatus.PLAYING &&
+                index !== lyricRef.current!.length - 1
+            ) {
                 const nextTime = lyricRef.current![index + 1][0];
 
                 const elapsed = performance.now() - start;
@@ -184,6 +190,10 @@ export const SynchronizedLyrics = ({
     }, [setCurrentLyric]);
 
     useEffect(() => {
+        statusRef.current = status;
+    }, [status]);
+
+    useEffect(() => {
         // Copy the follow settings into a ref that can be accessed in the timeout
         followRef.current = settings.follow;
     }, [settings.follow]);
@@ -194,17 +204,19 @@ export const SynchronizedLyrics = ({
         // ALSO remove listeners on close.
         lyricRef.current = lyrics;
 
-        if (status === PlayerStatus.PLAYING) {
-            // Use the current timestamp from player events
-            setCurrentLyric(timestamp * 1000 + delayMsRef.current);
+        // Use the current timestamp from player events.
+        // When paused, update the highlighted line without scheduling the next timer.
+        setCurrentLyric(
+            timestamp * 1000 + delayMsRef.current,
+            undefined,
+            undefined,
+            status === PlayerStatus.PLAYING,
+        );
 
-            return () => {
-                // Cleanup: clear the timer when lyrics change or component unmounts
-                if (lyricTimer.current) clearTimeout(lyricTimer.current);
-            };
-        }
-
-        return () => {};
+        return () => {
+            // Cleanup: clear the timer when lyrics change or component unmounts
+            if (lyricTimer.current) clearTimeout(lyricTimer.current);
+        };
     }, [lyrics, setCurrentLyric, status, timestamp]);
 
     useEffect(() => {
@@ -225,8 +237,13 @@ export const SynchronizedLyrics = ({
         delayMsRef.current = newOffset;
 
         // Use the current timestamp from player events
-        setCurrentLyric(timestamp * 1000 + delayMsRef.current);
-    }, [setCurrentLyric, offsetMs, timestamp]);
+        setCurrentLyric(
+            timestamp * 1000 + delayMsRef.current,
+            undefined,
+            undefined,
+            status === PlayerStatus.PLAYING,
+        );
+    }, [setCurrentLyric, offsetMs, status, timestamp]);
 
     useEffect(() => {
         // This handler is used specifically for dealing with seeking and progress updates.
@@ -236,6 +253,7 @@ export const SynchronizedLyrics = ({
                 clearTimeout(lyricTimer.current);
             }
 
+            setCurrentLyric(timestamp * 1000 + delayMsRef.current, undefined, undefined, false);
             return;
         }
 
@@ -243,7 +261,7 @@ export const SynchronizedLyrics = ({
             clearTimeout(lyricTimer.current);
         }
 
-        setCurrentLyric(timestamp * 1000 + delayMsRef.current);
+        setCurrentLyric(timestamp * 1000 + delayMsRef.current, undefined, undefined, true);
     }, [timestamp, setCurrentLyric, status]);
 
     useEffect(() => {

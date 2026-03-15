@@ -31,6 +31,7 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
     const [sidebarOpened, { close: closeSidebar, open: openSidebar }] = useDisclosure(false);
     const currentServer = useCurrentServer();
     const {
+        activeTab,
         expanded: isFullScreenPlayerExpanded,
         visualizerExpanded: isFullScreenVisualizerExpanded,
     } = useFullScreenPlayerStore();
@@ -82,7 +83,11 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
             </Drawer>
             <AnimatePresence initial={false}>
                 {isFullScreenPlayerExpanded && (
-                    <div className={styles.fullScreenPlayerOverlay}>
+                    <div
+                        className={clsx(styles.fullScreenPlayerOverlay, {
+                            [styles.fullScreenPlayerOverlayWithPlayerbar]: activeTab === 'lyrics',
+                        })}
+                    >
                         <MobileFullscreenPlayer />
                     </div>
                 )}
