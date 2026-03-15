@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
 import { FeatureCarousel } from '/@/renderer/components/feature-carousel/feature-carousel';
+import { getOfflineAlbumList, shouldUseOfflineQuery } from '/@/renderer/features/offline/offline-read';
 import { useCurrentServerId } from '/@/renderer/store';
 import { Album, AlbumListResponse, AlbumListSort, SortOrder } from '/@/shared/types/domain-types';
 
@@ -37,6 +38,15 @@ export const AlbumInfiniteFeatureCarousel = ({
             },
             initialPageParam: '0',
             queryFn: ({ pageParam, signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return getOfflineAlbumList(serverId, {
+                        limit: itemLimit,
+                        sortBy: AlbumListSort.RANDOM,
+                        sortOrder: SortOrder.DESC,
+                        startIndex: Number(pageParam),
+                    });
+                }
+
                 return api.controller.getAlbumList({
                     apiClientProps: { serverId, signal },
                     query: {

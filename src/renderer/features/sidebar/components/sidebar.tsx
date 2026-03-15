@@ -21,7 +21,6 @@ import {
     SidebarPlaylistList,
     SidebarSharedPlaylistList,
 } from '/@/renderer/features/sidebar/components/sidebar-playlist-list';
-import { AppRoute } from '/@/renderer/router/routes';
 import {
     useAppStore,
     useAppStoreActions,
@@ -59,10 +58,6 @@ export const Sidebar = () => {
             Artists: t('page.sidebar.albumArtists', { postProcess: 'titleCase' }),
             'Artists-all': t('page.sidebar.artists', { postProcess: 'titleCase' }),
             Collections: t('page.sidebar.collections', { postProcess: 'titleCase' }),
-            Downloads: t('page.sidebar.downloads', {
-                defaultValue: 'Downloads',
-                postProcess: 'titleCase',
-            }),
             Favorites: t('page.sidebar.favorites', { postProcess: 'titleCase' }),
             Folders: t('page.sidebar.folders', { postProcess: 'titleCase' }),
             Genres: t('page.sidebar.genres', { postProcess: 'titleCase' }),
@@ -99,19 +94,8 @@ export const Sidebar = () => {
 
     /* Library accordion: only items with a route (exclude Collections section) */
     const libraryItemsWithRoute = useMemo(
-        () => [
-            ...sidebarItemsWithRoute.filter((item) => item.id !== 'Collections' && item.route),
-            {
-                disabled: false,
-                id: 'Downloads',
-                label: t('page.sidebar.downloads', {
-                    defaultValue: 'Downloads',
-                    postProcess: 'titleCase',
-                }),
-                route: AppRoute.DOWNLOADS,
-            },
-        ],
-        [sidebarItemsWithRoute, t],
+        () => sidebarItemsWithRoute.filter((item) => item.id !== 'Collections' && item.route),
+        [sidebarItemsWithRoute],
     );
 
     const isCustomWindowBar =

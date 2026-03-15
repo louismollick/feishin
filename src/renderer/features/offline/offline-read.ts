@@ -1,4 +1,5 @@
 import orderBy from 'lodash/orderBy';
+import shuffle from 'lodash/shuffle';
 
 import { queryClient } from '/@/renderer/lib/react-query';
 import { useOfflineStoreBase } from '/@/renderer/store/offline.store';
@@ -260,6 +261,8 @@ const sortAlbums = (albums: Album[], sortBy = AlbumListSort.NAME, sortOrder = So
                 order,
                 order,
             ]);
+        case AlbumListSort.RANDOM:
+            return shuffle(albums);
         case AlbumListSort.DURATION:
             return orderBy(albums, ['duration', 'name'], [order, order]);
         case AlbumListSort.FAVORITED:
@@ -690,6 +693,33 @@ export const getOfflineTopSongs = async (serverId: string, query: TopSongListQue
 export const getOfflineGenreList = async (serverId: string, query: Partial<GenreListQuery> = {}) => {
     const songs = await getDownloadedSongs(serverId);
     return buildGenreListResponse(songs, query);
+};
+
+export const getOfflineItemList = async (
+    serverId: string,
+    itemType: LibraryItem,
+    query: Record<string, any> = {},
+) => {
+    switch (itemType) {
+        case LibraryItem.ALBUM:
+            return getOfflineAlbumList(serverId, query);
+        case LibraryItem.ALBUM_ARTIST:
+            return getOfflineAlbumArtistList(serverId, query);
+        case LibraryItem.ARTIST:
+            return getOfflineArtistList(serverId, query);
+        case LibraryItem.GENRE:
+            return getOfflineGenreList(serverId, query);
+        case LibraryItem.PLAYLIST:
+            return getOfflinePlaylistList(serverId, query);
+        case LibraryItem.SONG:
+            return getOfflineSongList(serverId, query);
+        default:
+            return {
+                items: [],
+                startIndex: query.startIndex ?? 0,
+                totalRecordCount: 0,
+            };
+    }
 };
 
 export const getOfflineSongsForItem = async (

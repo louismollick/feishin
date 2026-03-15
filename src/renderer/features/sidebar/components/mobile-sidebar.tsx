@@ -11,7 +11,6 @@ import {
     SidebarPlaylistList,
     SidebarSharedPlaylistList,
 } from '/@/renderer/features/sidebar/components/sidebar-playlist-list';
-import { AppRoute } from '/@/renderer/router/routes';
 import {
     SidebarItemType,
     useSidebarItems,
@@ -31,10 +30,6 @@ export const MobileSidebar = () => {
             Albums: t('page.sidebar.albums', { postProcess: 'titleCase' }),
             Artists: t('page.sidebar.albumArtists', { postProcess: 'titleCase' }),
             'Artists-all': t('page.sidebar.artists', { postProcess: 'titleCase' }),
-            Downloads: t('page.sidebar.downloads', {
-                defaultValue: 'Downloads',
-                postProcess: 'titleCase',
-            }),
             Favorites: t('page.sidebar.favorites', { postProcess: 'titleCase' }),
             Genres: t('page.sidebar.genres', { postProcess: 'titleCase' }),
             Home: t('page.sidebar.home', { postProcess: 'titleCase' }),
@@ -89,18 +84,7 @@ export const MobileSidebar = () => {
                             </Text>
                         </Accordion.Control>
                         <Accordion.Panel>
-                            {[
-                                ...sidebarItemsWithRoute,
-                                {
-                                    disabled: false,
-                                    id: 'Downloads',
-                                    label: t('page.sidebar.downloads', {
-                                        defaultValue: 'Downloads',
-                                        postProcess: 'titleCase',
-                                    }),
-                                    route: AppRoute.DOWNLOADS,
-                                },
-                            ].map((item) => {
+                            {sidebarItemsWithRoute.map((item) => {
                                 return (
                                     <SidebarItem key={`sidebar-${item.route}`} to={item.route}>
                                         <Group gap="sm">

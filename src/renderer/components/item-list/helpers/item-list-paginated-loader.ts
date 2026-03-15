@@ -11,6 +11,7 @@ import { queryKeys } from '/@/renderer/api/query-keys';
 import { useListContext } from '/@/renderer/context/list-context';
 import { eventEmitter } from '/@/renderer/events/event-emitter';
 import { UserFavoriteEventPayload, UserRatingEventPayload } from '/@/renderer/events/events';
+import { getOfflineItemList, shouldUseOfflineQuery } from '/@/renderer/features/offline/offline-read';
 import { getListRefreshMutationKey } from '/@/renderer/features/shared/components/list-refresh-button';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
@@ -89,6 +90,10 @@ export const useItemListPaginatedLoader = ({
         gcTime: 1000 * 15,
         placeholderData: { items: getInitialData(itemsPerPage) },
         queryFn: async ({ signal }) => {
+            if (shouldUseOfflineQuery()) {
+                return getOfflineItemList(serverId, itemType, queryParams);
+            }
+
             const result = await listQueryFn({
                 apiClientProps: { serverId, signal },
                 query: queryParams,

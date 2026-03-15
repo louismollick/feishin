@@ -11,6 +11,7 @@ import {
 import { DataRow, MemoizedItemCard } from '/@/renderer/components/item-card/item-card';
 import { useDefaultItemListControls } from '/@/renderer/components/item-list/helpers/item-list-controls';
 import { useGridRows } from '/@/renderer/components/item-list/helpers/use-grid-rows';
+import { getOfflineAlbumList, shouldUseOfflineQuery } from '/@/renderer/features/offline/offline-read';
 import { useCurrentServerId } from '/@/renderer/store';
 import {
     Album,
@@ -162,6 +163,16 @@ function useAlbumListInfinite(
         },
         initialPageParam: '0',
         queryFn: ({ pageParam, signal }) => {
+            if (shouldUseOfflineQuery()) {
+                return getOfflineAlbumList(serverId, {
+                    limit: itemLimit,
+                    sortBy,
+                    sortOrder,
+                    startIndex: Number(pageParam),
+                    ...additionalQuery,
+                });
+            }
+
             return api.controller.getAlbumList({
                 apiClientProps: { serverId, signal },
                 query: {

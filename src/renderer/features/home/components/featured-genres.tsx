@@ -9,6 +9,7 @@ import styles from './featured-genres.module.css';
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
 import { genresQueries } from '/@/renderer/features/genres/api/genres-api';
+import { getOfflineSongList, shouldUseOfflineQuery } from '/@/renderer/features/offline/offline-read';
 import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
 import { PlayButton } from '/@/renderer/features/shared/components/play-button';
 import { useContainerQuery } from '/@/renderer/hooks';
@@ -155,6 +156,15 @@ const GenrePlayButton = ({ genre }: { genre: Genre }) => {
             const data = await queryClient.fetchQuery({
                 gcTime: 0,
                 queryFn: () => {
+                    if (shouldUseOfflineQuery()) {
+                        return getOfflineSongList(serverId, {
+                            genreIds: [genre.id],
+                            limit: 100,
+                            sortOrder: SortOrder.ASC,
+                            startIndex: 0,
+                        });
+                    }
+
                     return api.controller.getRandomSongList({
                         apiClientProps: { serverId },
                         query: {
@@ -168,7 +178,7 @@ const GenrePlayButton = ({ genre }: { genre: Genre }) => {
                 staleTime: 0,
             });
 
-            player.addToQueueByData(data?.items || [], Play.NOW);
+            player.addToQueueByData(shuffle(data?.items || []), Play.NOW);
         },
         [player, queryClient, serverId],
     );
