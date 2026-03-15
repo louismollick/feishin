@@ -227,8 +227,7 @@
     text-align: center;
 }
 
-.queue-content,
-.lyrics-content {
+.queue-content {
     flex: 1 1 auto;
     min-height: 0;
     padding: 1rem;
@@ -236,4 +235,11 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+}
+
+.lyrics-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1rem 1rem 0;
+    overflow: hidden;
 }
