@@ -1130,6 +1130,7 @@ export const usePlayerStoreBase = createWithEqualityFn<PlayerState>()(
                     set((state) => {
                         state.player.seekToTimestamp = uniqueSeekToTimestamp(timestamp);
                     });
+                    setTimestampStore(timestamp);
                 },
                 mediaSkipBackward: (offset?: number) => {
                     const offsetFromSettings =
@@ -1141,6 +1142,7 @@ export const usePlayerStoreBase = createWithEqualityFn<PlayerState>()(
                     set((state) => {
                         state.player.seekToTimestamp = uniqueSeekToTimestamp(newTimestamp);
                     });
+                    setTimestampStore(newTimestamp);
                 },
                 mediaSkipForward: (offset?: number) => {
                     const state = get();
@@ -1162,6 +1164,7 @@ export const usePlayerStoreBase = createWithEqualityFn<PlayerState>()(
                     set((state) => {
                         state.player.seekToTimestamp = uniqueSeekToTimestamp(newTimestamp);
                     });
+                    setTimestampStore(newTimestamp);
                 },
                 mediaStop: () => {
                     set((state) => {
