@@ -26,7 +26,6 @@ import {
     useSettingsStoreActions,
 } from '/@/renderer/store/settings.store';
 import { type Font, FONT_OPTIONS } from '/@/renderer/types/fonts';
-import { Button } from '/@/shared/components/button/button';
 import { FileInput } from '/@/shared/components/file-input/file-input';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
 import { SegmentedControl } from '/@/shared/components/segmented-control/segmented-control';
@@ -330,22 +329,6 @@ export const ApplicationSettings = memo(() => {
             }),
             isHidden: !isElectron(),
             title: t('setting.zoom', {
-                postProcess: 'sentenceCase',
-            }),
-        },
-        {
-            control: (
-                <Button onClick={() => window.location.reload()} variant="default">
-                    {t('common.reload', { postProcess: 'sentenceCase' })}
-                </Button>
-            ),
-            description: t('setting.reloadWebApp', {
-                defaultValue: 'Reload the web app to pick up the latest installed version.',
-                postProcess: 'sentenceCase',
-            }),
-            isHidden: isElectron(),
-            title: t('setting.reloadWebApp', {
-                defaultValue: 'Reload web app',
                 postProcess: 'sentenceCase',
             }),
         },
