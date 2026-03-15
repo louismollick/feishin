@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import styles from './mobile-fullscreen-player.module.css';
 
 import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import {
     useIsRadioActive,
     useRadioPlayer,
@@ -106,6 +107,10 @@ export const MobileFullscreenPlayerAlbumArt = () => {
         size: mainImageDimensions.idealSize,
         type: 'fullScreenPlayer',
     });
+    const offlineCurrentImageUrl = useOfflineArtworkUrl(
+        currentSong?._serverId,
+        currentSong?.imageId,
+    );
 
     const nextImageUrl = useItemImageUrl({
         id: nextSong?.imageId || undefined,
@@ -113,11 +118,12 @@ export const MobileFullscreenPlayerAlbumArt = () => {
         size: mainImageDimensions.idealSize,
         type: 'fullScreenPlayer',
     });
+    const offlineNextImageUrl = useOfflineArtworkUrl(nextSong?._serverId, nextSong?.imageId);
 
     const [imageState, setImageState] = useSetState({
-        bottomImage: nextImageUrl,
+        bottomImage: offlineNextImageUrl || nextImageUrl,
         current: 0,
-        topImage: currentImageUrl,
+        topImage: offlineCurrentImageUrl || currentImageUrl,
     });
 
     const updateImageSize = useCallback(() => {
@@ -152,13 +158,25 @@ export const MobileFullscreenPlayerAlbumArt = () => {
         const isTop = imageStateRef.current.current === 0;
 
         setImageState({
-            bottomImage: isTop ? currentImageUrl : nextImageUrl,
+            bottomImage: isTop
+                ? offlineCurrentImageUrl || currentImageUrl
+                : offlineNextImageUrl || nextImageUrl,
             current: isTop ? 1 : 0,
-            topImage: isTop ? nextImageUrl : currentImageUrl,
+            topImage: isTop
+                ? offlineNextImageUrl || nextImageUrl
+                : offlineCurrentImageUrl || currentImageUrl,
         });
 
         previousSongRef.current = currentSong?._uniqueId;
-    }, [currentSong?._uniqueId, currentImageUrl, nextSong?._uniqueId, nextImageUrl, setImageState]);
+    }, [
+        currentSong?._uniqueId,
+        currentImageUrl,
+        offlineCurrentImageUrl,
+        nextSong?._uniqueId,
+        nextImageUrl,
+        offlineNextImageUrl,
+        setImageState,
+    ]);
 
     return (
         <div className={styles.imageContainer} ref={mainImageRef}>

@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { queryKeys } from '/@/renderer/api/query-keys';
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { songsQueries } from '/@/renderer/features/songs/api/songs-api';
 import { useCurrentServerId, usePlayButtonBehavior } from '/@/renderer/store';
@@ -21,6 +22,8 @@ export const PlayTrackRadioAction = ({ disabled, song }: PlayTrackRadioActionPro
     const serverId = useCurrentServerId();
     const queryClient = useQueryClient();
     const playButtonBehavior = usePlayButtonBehavior();
+    const { canMutate } = useOfflineReadOnly();
+    const isDisabled = disabled || !canMutate;
 
     const handlePlayTrackRadio = useCallback(
         async (playType: Play) => {
@@ -67,7 +70,7 @@ export const PlayTrackRadioAction = ({ disabled, song }: PlayTrackRadioActionPro
         <ContextMenu.Submenu>
             <ContextMenu.SubmenuTarget>
                 <ContextMenu.Item
-                    disabled={disabled}
+                    disabled={isDisabled}
                     leftIcon="radio"
                     onSelect={defaultPlayTrackRadioAction}
                     rightIcon="arrowRightS"
@@ -76,13 +79,13 @@ export const PlayTrackRadioAction = ({ disabled, song }: PlayTrackRadioActionPro
                 </ContextMenu.Item>
             </ContextMenu.SubmenuTarget>
             <ContextMenu.SubmenuContent>
-                <ContextMenu.Item leftIcon="mediaPlay" onSelect={handlePlayTrackRadioNow}>
+                <ContextMenu.Item disabled={isDisabled} leftIcon="mediaPlay" onSelect={handlePlayTrackRadioNow}>
                     {t('player.play', { postProcess: 'sentenceCase' })}
                 </ContextMenu.Item>
-                <ContextMenu.Item leftIcon="mediaPlayNext" onSelect={handlePlayTrackRadioNext}>
+                <ContextMenu.Item disabled={isDisabled} leftIcon="mediaPlayNext" onSelect={handlePlayTrackRadioNext}>
                     {t('player.addNext', { postProcess: 'sentenceCase' })}
                 </ContextMenu.Item>
-                <ContextMenu.Item leftIcon="mediaPlayLast" onSelect={handlePlayTrackRadioLast}>
+                <ContextMenu.Item disabled={isDisabled} leftIcon="mediaPlayLast" onSelect={handlePlayTrackRadioLast}>
                     {t('player.addLast', { postProcess: 'sentenceCase' })}
                 </ContextMenu.Item>
             </ContextMenu.SubmenuContent>

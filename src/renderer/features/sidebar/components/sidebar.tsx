@@ -7,6 +7,7 @@ import styles from './sidebar.module.css';
 
 import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import {
     useIsRadioActive,
     useRadioPlayer,
@@ -176,6 +177,7 @@ const SidebarImage = () => {
         serverId: currentSong?._serverId,
         type: 'sidebar',
     });
+    const offlineImageUrl = useOfflineArtworkUrl(currentSong?._serverId, currentSong?.imageId);
 
     const isPlayingRadio = isRadioActive && isRadioPlaying;
     const isSongDefined = Boolean(currentSong?.id);
@@ -236,7 +238,7 @@ const SidebarImage = () => {
                     >
                         <Icon color="muted" icon="radio" size="40%" />
                     </Center>
-                ) : imageUrl ? (
+                ) : offlineImageUrl || imageUrl ? (
                     <img
                         className={clsx(styles.sidebarImage, {
                             [styles.censored]:
@@ -244,7 +246,7 @@ const SidebarImage = () => {
                                 blurExplicitImages,
                         })}
                         loading="eager"
-                        src={imageUrl}
+                        src={offlineImageUrl || imageUrl}
                     />
                 ) : (
                     <ImageUnloader icon="emptySongImage" />

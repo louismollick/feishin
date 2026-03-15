@@ -3,41 +3,80 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '/@/renderer/api';
-import { useCurrentServer } from '/@/renderer/store';
+import { useOfflineActions, useOfflineTracksMap } from '/@/renderer/store';
+import { useCurrentServer } from '/@/renderer/store/auth.store';
 import { ContextMenu } from '/@/shared/components/context-menu/context-menu';
+import { LibraryItem, Song } from '/@/shared/types/domain-types';
 
 interface DownloadActionProps {
     ids: string[];
+    itemType: LibraryItem;
+    songs?: Song[];
 }
 
 const utils = isElectron() ? window.api.utils : null;
 
-export const DownloadAction = ({ ids }: DownloadActionProps) => {
+export const DownloadAction = ({ ids, itemType, songs }: DownloadActionProps) => {
     const { t } = useTranslation();
     const server = useCurrentServer();
+    const offlineTracks = useOfflineTracksMap();
+    const { queueCollectionDownload, removeTrack } = useOfflineActions();
+    const areAllSongsDownloaded =
+        !isElectron() &&
+        Boolean(songs?.length) &&
+        songs!.every((song) => Boolean(offlineTracks[`${song._serverId}:${song.id}`]));
 
     const onSelect = useCallback(async () => {
         try {
-            for (const id of ids) {
-                const downloadUrl = api.controller.getDownloadUrl({
-                    apiClientProps: { serverId: server.id },
-                    query: { id },
-                });
+            if (isElectron()) {
+                for (const id of ids) {
+                    const downloadUrl = api.controller.getDownloadUrl({
+                        apiClientProps: { serverId: server.id },
+                        query: { id },
+                    });
 
-                if (isElectron()) {
                     utils?.download(downloadUrl);
-                } else {
-                    window.open(downloadUrl, '_blank');
                 }
+                return;
             }
+
+            if (songs?.length && areAllSongsDownloaded) {
+                for (const song of songs) {
+                    await removeTrack(song._serverId, song.id);
+                }
+                return;
+            }
+
+            await queueCollectionDownload({
+                ids,
+                itemType,
+                serverId: server.id,
+                songs,
+            });
         } catch (error) {
             console.error('Failed to download items:', error);
         }
-    }, [ids, server]);
+    }, [
+        areAllSongsDownloaded,
+        ids,
+        itemType,
+        queueCollectionDownload,
+        removeTrack,
+        server.id,
+        songs,
+    ]);
 
     return (
-        <ContextMenu.Item disabled={ids.length > 1} leftIcon="download" onSelect={onSelect}>
-            {t('page.contextMenu.download', { postProcess: 'sentenceCase' })}
+        <ContextMenu.Item leftIcon="download" onSelect={onSelect}>
+            {areAllSongsDownloaded
+                ? t('page.contextMenu.removeOfflineDownload', {
+                      defaultValue: 'remove offline download',
+                      postProcess: 'sentenceCase',
+                  })
+                : t('page.contextMenu.downloadOffline', {
+                      defaultValue: 'download for offline',
+                      postProcess: 'sentenceCase',
+                  })}
         </ContextMenu.Item>
     );
 };

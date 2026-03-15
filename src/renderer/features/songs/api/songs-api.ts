@@ -4,6 +4,11 @@ import { api } from '/@/renderer/api';
 import { controller } from '/@/renderer/api/controller';
 import { queryKeys } from '/@/renderer/api/query-keys';
 import { getOptimizedListCount } from '/@/renderer/api/utils-list-count';
+import {
+    getOfflineSongList,
+    resolveOfflineQuery,
+    shouldUseOfflineQuery,
+} from '/@/renderer/features/offline/offline-read';
 import { QueryHookArgs } from '/@/renderer/lib/react-query';
 import {
     AlbumRadioQuery,
@@ -57,14 +62,23 @@ export const songsQueries = {
         });
     },
     list: (args: QueryHookArgs<SongListQuery>, imageSize?: number) => {
+        const query = { ...args.query, imageSize };
+        const queryKey = queryKeys.songs.list(args.serverId, query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineSongList(args.serverId, args.query),
+                    );
+                }
+
                 return controller.getSongList({
                     apiClientProps: { serverId: args.serverId, signal },
-                    query: { ...args.query, imageSize },
+                    query,
                 });
             },
-            queryKey: queryKeys.songs.list(args.serverId, { ...args.query, imageSize }),
+            queryKey,
             ...args.options,
         });
     },
@@ -72,6 +86,11 @@ export const songsQueries = {
         return queryOptions({
             gcTime: 1000 * 60 * 60,
             queryFn: async ({ client, signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    const response = await getOfflineSongList(args.serverId, args.query);
+                    return response.totalRecordCount ?? 0;
+                }
+
                 const optimizedCount = await getOptimizedListCount<
                     ListCountQuery<SongListQuery>,
                     SongListQuery,

@@ -15,6 +15,7 @@ import styles from './full-screen-player.module.css';
 
 import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { SONG_TABLE_COLUMNS } from '/@/renderer/components/item-list/item-table-list/default-columns';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import { FullScreenPlayerImage } from '/@/renderer/features/player/components/full-screen-player-image';
 import { FullScreenPlayerQueue } from '/@/renderer/features/player/components/full-screen-player-queue';
 import {
@@ -89,17 +90,22 @@ const BackgroundImage = memo(({ dynamicBackground, dynamicIsImage }: BackgroundI
         itemType: LibraryItem.SONG,
         type: 'itemCard',
     });
+    const offlineCurrentImageUrl = useOfflineArtworkUrl(
+        currentSong?._serverId,
+        currentSong?.imageId,
+    );
 
     const nextImageUrl = useItemImageUrl({
         id: nextSong?.imageId || undefined,
         itemType: LibraryItem.SONG,
         type: 'itemCard',
     });
+    const offlineNextImageUrl = useOfflineArtworkUrl(nextSong?._serverId, nextSong?.imageId);
 
     const [imageState, setImageState] = useState({
-        bottomImage: nextImageUrl,
+        bottomImage: offlineNextImageUrl || nextImageUrl,
         current: 0,
-        topImage: currentImageUrl,
+        topImage: offlineCurrentImageUrl || currentImageUrl,
     });
 
     const previousSongRef = useRef<string | undefined>(currentSong?._uniqueId);
@@ -119,13 +125,24 @@ const BackgroundImage = memo(({ dynamicBackground, dynamicIsImage }: BackgroundI
         const isTop = imageStateRef.current.current === 0;
 
         setImageState({
-            bottomImage: isTop ? currentImageUrl : nextImageUrl,
+            bottomImage: isTop
+                ? offlineCurrentImageUrl || currentImageUrl
+                : offlineNextImageUrl || nextImageUrl,
             current: isTop ? 1 : 0,
-            topImage: isTop ? nextImageUrl : currentImageUrl,
+            topImage: isTop
+                ? offlineNextImageUrl || nextImageUrl
+                : offlineCurrentImageUrl || currentImageUrl,
         });
 
         previousSongRef.current = currentSong?._uniqueId;
-    }, [currentSong?._uniqueId, currentImageUrl, nextSong?._uniqueId, nextImageUrl]);
+    }, [
+        currentSong?._uniqueId,
+        currentImageUrl,
+        offlineCurrentImageUrl,
+        nextSong?._uniqueId,
+        nextImageUrl,
+        offlineNextImageUrl,
+    ]);
 
     if (!dynamicBackground || !dynamicIsImage) {
         return null;

@@ -1,6 +1,7 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '/@/renderer/api';
+import { resolvePlayableSource } from '/@/renderer/features/offline/offline-service';
 import { TranscodingConfig } from '/@/renderer/store';
 import { QueueSong } from '/@/shared/types/domain-types';
 
@@ -10,8 +11,43 @@ export function useSongUrl(
     transcode: TranscodingConfig,
 ): string | undefined {
     const prior = useRef(['', '']);
+    const [offlineUrl, setOfflineUrl] = useState<string>();
 
-    return useMemo(() => {
+    useEffect(() => {
+        let cancelled = false;
+        let revoke: (() => void) | null = null;
+
+        if (!song?._serverId) {
+            setOfflineUrl(undefined);
+            return;
+        }
+
+        resolvePlayableSource(song)
+            .then((source) => {
+                if (cancelled || !source) {
+                    source?.revoke();
+                    if (!cancelled) {
+                        setOfflineUrl(undefined);
+                    }
+                    return;
+                }
+
+                revoke = source.revoke;
+                setOfflineUrl(source.url);
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setOfflineUrl(undefined);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+            revoke?.();
+        };
+    }, [song]);
+
+    const remoteUrl = useMemo(() => {
         if (song?._serverId) {
             // If we are the current track, we do not want a transcoding
             // reconfiguration to force a restart.
@@ -46,6 +82,16 @@ export function useSongUrl(
         transcode.format,
         transcode.enabled,
     ]);
+
+    if (offlineUrl) {
+        return offlineUrl;
+    }
+
+    if (!navigator.onLine) {
+        return undefined;
+    }
+
+    return remoteUrl;
 }
 
 export const getSongUrl = (song: QueueSong, transcode: TranscodingConfig) => {

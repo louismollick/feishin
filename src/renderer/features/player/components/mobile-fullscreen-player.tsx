@@ -18,6 +18,7 @@ import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
 import { Lyrics } from '/@/renderer/features/lyrics/lyrics';
 import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queue';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import { MobileFullscreenPlayerAlbumArt } from '/@/renderer/features/player/components/mobile-fullscreen-player-album-art';
 import { MobileFullscreenPlayerBottomControls } from '/@/renderer/features/player/components/mobile-fullscreen-player-bottom-controls';
 import { MobileFullscreenPlayerControls } from '/@/renderer/features/player/components/mobile-fullscreen-player-controls';
@@ -87,17 +88,22 @@ const BackgroundImage = memo(({ dynamicBackground, dynamicIsImage }: BackgroundI
         itemType: LibraryItem.SONG,
         type: 'itemCard',
     });
+    const offlineCurrentImageUrl = useOfflineArtworkUrl(
+        currentSong?._serverId,
+        currentSong?.imageId,
+    );
 
     const nextImageUrl = useItemImageUrl({
         id: nextSong?.imageId || undefined,
         itemType: LibraryItem.SONG,
         type: 'itemCard',
     });
+    const offlineNextImageUrl = useOfflineArtworkUrl(nextSong?._serverId, nextSong?.imageId);
 
     const [imageState, setImageState] = useState({
-        bottomImage: nextImageUrl,
+        bottomImage: offlineNextImageUrl || nextImageUrl,
         current: 0,
-        topImage: currentImageUrl,
+        topImage: offlineCurrentImageUrl || currentImageUrl,
     });
 
     const previousSongRef = useRef<string | undefined>(currentSong?._uniqueId);
@@ -116,13 +122,24 @@ const BackgroundImage = memo(({ dynamicBackground, dynamicIsImage }: BackgroundI
         const isTop = imageStateRef.current.current === 0;
 
         setImageState({
-            bottomImage: isTop ? currentImageUrl : nextImageUrl,
+            bottomImage: isTop
+                ? offlineCurrentImageUrl || currentImageUrl
+                : offlineNextImageUrl || nextImageUrl,
             current: isTop ? 1 : 0,
-            topImage: isTop ? nextImageUrl : currentImageUrl,
+            topImage: isTop
+                ? offlineNextImageUrl || nextImageUrl
+                : offlineCurrentImageUrl || currentImageUrl,
         });
 
         previousSongRef.current = currentSong?._uniqueId;
-    }, [currentSong?._uniqueId, currentImageUrl, nextSong?._uniqueId, nextImageUrl]);
+    }, [
+        currentSong?._uniqueId,
+        currentImageUrl,
+        offlineCurrentImageUrl,
+        nextSong?._uniqueId,
+        nextImageUrl,
+        offlineNextImageUrl,
+    ]);
 
     if (!dynamicBackground || !dynamicIsImage) {
         return null;

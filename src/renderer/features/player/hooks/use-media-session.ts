@@ -2,6 +2,7 @@ import isElectron from 'is-electron';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { getItemImageUrl } from '/@/renderer/components/item-image/item-image';
+import { getOfflineArtworkUrl } from '/@/renderer/features/offline/offline-service';
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
@@ -126,7 +127,7 @@ export const useMediaSession = () => {
     ]);
 
     const updateMediaSessionMetadata = useCallback(
-        (song: QueueSong | undefined) => {
+        async (song: QueueSong | undefined) => {
             if (!isMediaSessionEnabled) {
                 return;
             }
@@ -150,12 +151,16 @@ export const useMediaSession = () => {
                 return;
             }
 
-            const imageUrl = getItemImageUrl({
+            let imageUrl = getItemImageUrl({
                 id: song?.imageId || undefined,
                 imageUrl: song?.imageUrl,
                 itemType: LibraryItem.SONG,
                 type: 'itemCard',
             });
+
+            if (song?.imageId) {
+                imageUrl = (await getOfflineArtworkUrl(song._serverId, song.imageId)) || imageUrl;
+            }
 
             mediaSession.metadata = new MediaMetadata({
                 album: song?.album ?? '',
@@ -174,7 +179,7 @@ export const useMediaSession = () => {
         }
 
         if (isRadioActive && isRadioPlaying) {
-            updateMediaSessionMetadata(undefined);
+            updateMediaSessionMetadata(undefined).catch(console.error);
         }
     }, [
         isMediaSessionEnabled,
@@ -196,7 +201,7 @@ export const useMediaSession = () => {
                     return;
                 }
 
-                updateMediaSessionMetadata(properties.song);
+                updateMediaSessionMetadata(properties.song).catch(console.error);
             },
             onPlayerRepeated: () => {
                 if (!isMediaSessionEnabled) {
@@ -208,7 +213,7 @@ export const useMediaSession = () => {
                 }
 
                 const currentSong = usePlayerStore.getState().getCurrentSong();
-                updateMediaSessionMetadata(currentSong);
+                updateMediaSessionMetadata(currentSong).catch(console.error);
             },
             onPlayerStatus: (properties) => {
                 if (!isMediaSessionEnabled) {

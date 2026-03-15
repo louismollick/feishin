@@ -7,6 +7,7 @@ import { generatePath, Link } from 'react-router';
 import styles from './full-screen-player-image.module.css';
 
 import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import {
     useIsRadioActive,
     useRadioPlayer,
@@ -112,6 +113,10 @@ export const FullScreenPlayerImage = () => {
         serverId: currentSong?._serverId,
         type: 'fullScreenPlayer',
     });
+    const offlineCurrentImageUrl = useOfflineArtworkUrl(
+        currentSong?._serverId,
+        currentSong?.imageId,
+    );
 
     const nextImageUrl = useItemImageUrl({
         id: nextSong?.imageId || undefined,
@@ -119,13 +124,14 @@ export const FullScreenPlayerImage = () => {
         serverId: nextSong?._serverId,
         type: 'fullScreenPlayer',
     });
+    const offlineNextImageUrl = useOfflineArtworkUrl(nextSong?._serverId, nextSong?.imageId);
 
     const [imageState, setImageState] = useSetState({
         bottomExplicit: nextSong?.explicitStatus === ExplicitStatus.EXPLICIT,
-        bottomImage: nextImageUrl,
+        bottomImage: offlineNextImageUrl || nextImageUrl,
         current: 0,
         topExplicit: currentSong?.explicitStatus === ExplicitStatus.EXPLICIT,
-        topImage: currentImageUrl,
+        topImage: offlineCurrentImageUrl || currentImageUrl,
     });
 
     // Track previous song to detect changes
@@ -152,12 +158,16 @@ export const FullScreenPlayerImage = () => {
             bottomExplicit:
                 (isTop ? currentSong?.explicitStatus : nextSong?.explicitStatus) ===
                 ExplicitStatus.EXPLICIT,
-            bottomImage: isTop ? currentImageUrl : nextImageUrl,
+            bottomImage: isTop
+                ? offlineCurrentImageUrl || currentImageUrl
+                : offlineNextImageUrl || nextImageUrl,
             current: isTop ? 1 : 0,
             topExplicit:
                 (isTop ? nextSong?.explicitStatus : currentSong?.explicitStatus) ===
                 ExplicitStatus.EXPLICIT,
-            topImage: isTop ? nextImageUrl : currentImageUrl,
+            topImage: isTop
+                ? offlineNextImageUrl || nextImageUrl
+                : offlineCurrentImageUrl || currentImageUrl,
         });
 
         previousSongRef.current = currentSong?._uniqueId;
@@ -165,8 +175,10 @@ export const FullScreenPlayerImage = () => {
         isPlayingRadio,
         currentSong?._uniqueId,
         currentImageUrl,
+        offlineCurrentImageUrl,
         nextSong?._uniqueId,
         nextImageUrl,
+        offlineNextImageUrl,
         setImageState,
         currentSong?.explicitStatus,
         nextSong?.explicitStatus,

@@ -10,6 +10,7 @@ import styles from './left-controls.module.css';
 import { ItemImage } from '/@/renderer/components/item-image/item-image';
 import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import { RadioMetadataDisplay } from '/@/renderer/features/player/components/radio-metadata-display';
 import { useIsRadioActive } from '/@/renderer/features/radio/hooks/use-radio-player';
 import { AppRoute } from '/@/renderer/router/routes';
@@ -46,6 +47,7 @@ export const LeftControls = () => {
     );
 
     const currentSong = usePlayerSong();
+    const offlineArtworkUrl = useOfflineArtworkUrl(currentSong?._serverId, currentSong?.imageId);
     const isRadioActive = useIsRadioActive();
     const { bindings } = useHotkeySettings();
 
@@ -140,6 +142,7 @@ export const LeftControls = () => {
                                             id={currentSong?.imageId}
                                             itemType={LibraryItem.SONG}
                                             serverId={currentSong?._serverId}
+                                            src={offlineArtworkUrl || undefined}
                                             type="table"
                                         />
                                     )}

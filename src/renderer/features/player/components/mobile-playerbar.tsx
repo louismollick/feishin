@@ -8,6 +8,7 @@ import styles from './mobile-playerbar.module.css';
 
 import { ItemImage } from '/@/renderer/components/item-image/item-image';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import { MainPlayButton, PlayerButton } from '/@/renderer/features/player/components/player-button';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { AppRoute } from '/@/renderer/router/routes';
@@ -34,6 +35,7 @@ export const MobilePlayerbar = () => {
     const setFullScreenPlayerStore = useSetFullScreenPlayerStore();
     const { setStore } = useFullScreenPlayerStoreActions();
     const currentSong = usePlayerSong();
+    const offlineArtworkUrl = useOfflineArtworkUrl(currentSong?._serverId, currentSong?.imageId);
     const status = usePlayerStatus();
     const { mediaNext, mediaPrevious, mediaTogglePlayPause } = usePlayer();
     const title = currentSong?.name;
@@ -117,6 +119,7 @@ export const MobilePlayerbar = () => {
                                             fetchPriority="high"
                                             id={currentSong.imageId}
                                             itemType={LibraryItem.SONG}
+                                            src={offlineArtworkUrl || undefined}
                                             type="table"
                                         />
                                     </Tooltip>

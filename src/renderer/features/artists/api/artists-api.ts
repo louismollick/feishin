@@ -4,6 +4,16 @@ import { api } from '/@/renderer/api';
 import { controller } from '/@/renderer/api/controller';
 import { queryKeys } from '/@/renderer/api/query-keys';
 import { getOptimizedListCount } from '/@/renderer/api/utils-list-count';
+import {
+    getOfflineAlbumArtistDetail,
+    getOfflineAlbumArtistInfo,
+    getOfflineAlbumArtistList,
+    getOfflineArtistList,
+    getOfflineSongList,
+    getOfflineTopSongs,
+    resolveOfflineQuery,
+    shouldUseOfflineQuery,
+} from '/@/renderer/features/offline/offline-read';
 import { QueryHookArgs } from '/@/renderer/lib/react-query';
 import {
     AlbumArtistDetailQuery,
@@ -18,20 +28,36 @@ import {
 
 export const artistsQueries = {
     albumArtistDetail: (args: QueryHookArgs<AlbumArtistDetailQuery>) => {
+        const queryKey = queryKeys.albumArtists.detail(args.serverId, args.query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineAlbumArtistDetail(args.serverId, args.query),
+                    );
+                }
+
                 return api.controller.getAlbumArtistDetail({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: args.query,
                 });
             },
-            queryKey: queryKeys.albumArtists.detail(args.serverId, args.query),
+            queryKey,
             ...args.options,
         });
     },
     albumArtistInfo: (args: QueryHookArgs<AlbumArtistInfoQuery>) => {
+        const queryKey = queryKeys.albumArtists.info(args.serverId, args.query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineAlbumArtistInfo(args.serverId, { id: args.query.id }),
+                    );
+                }
+
                 return (
                     api.controller.getAlbumArtistInfo?.({
                         apiClientProps: { serverId: args.serverId, signal },
@@ -39,19 +65,27 @@ export const artistsQueries = {
                     }) ?? Promise.resolve(null)
                 );
             },
-            queryKey: queryKeys.albumArtists.info(args.serverId, args.query),
+            queryKey,
             ...args.options,
         });
     },
     albumArtistList: (args: QueryHookArgs<AlbumArtistListQuery>) => {
+        const queryKey = queryKeys.albumArtists.list(args.serverId, args.query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineAlbumArtistList(args.serverId, args.query),
+                    );
+                }
+
                 return api.controller.getAlbumArtistList({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: args.query,
                 });
             },
-            queryKey: queryKeys.albumArtists.list(args.serverId, args.query),
+            queryKey,
             ...args.options,
         });
     },
@@ -59,6 +93,11 @@ export const artistsQueries = {
         return queryOptions({
             gcTime: 1000 * 60 * 60,
             queryFn: async ({ client, signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    const response = await getOfflineAlbumArtistList(args.serverId, args.query);
+                    return response.totalRecordCount ?? 0;
+                }
+
                 const optimizedCount = await getOptimizedListCount<
                     ListCountQuery<AlbumArtistListQuery>,
                     AlbumArtistListQuery,
@@ -90,14 +129,22 @@ export const artistsQueries = {
         });
     },
     artistList: (args: QueryHookArgs<ArtistListQuery>) => {
+        const queryKey = queryKeys.artists.list(args.serverId, args.query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineArtistList(args.serverId, args.query),
+                    );
+                }
+
                 return api.controller.getArtistList({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: args.query,
                 });
             },
-            queryKey: queryKeys.artists.list(args.serverId, args.query),
+            queryKey,
             ...args.options,
         });
     },
@@ -105,6 +152,11 @@ export const artistsQueries = {
         return queryOptions({
             gcTime: 1000 * 60 * 60,
             queryFn: async ({ client, signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    const response = await getOfflineArtistList(args.serverId, args.query);
+                    return response.totalRecordCount ?? 0;
+                }
+
                 const optimizedCount = await getOptimizedListCount<
                     ListCountQuery<ArtistListQuery>,
                     ArtistListQuery,
@@ -138,8 +190,23 @@ export const artistsQueries = {
         });
     },
     favoriteSongs: (args: QueryHookArgs<{ artistId: string }>) => {
+        const queryKey = queryKeys.albumArtists.favoriteSongs(args.serverId, args.query.artistId);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineSongList(args.serverId, {
+                            artistIds: [args.query.artistId],
+                            favorite: true,
+                            limit: -1,
+                            sortBy: SongListSort.RELEASE_DATE,
+                            sortOrder: SortOrder.ASC,
+                            startIndex: 0,
+                        }),
+                    );
+                }
+
                 return api.controller.getSongList({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: {
@@ -152,18 +219,26 @@ export const artistsQueries = {
                     },
                 });
             },
-            queryKey: queryKeys.albumArtists.favoriteSongs(args.serverId, args.query.artistId),
+            queryKey,
         });
     },
     topSongs: (args: QueryHookArgs<TopSongListQuery>) => {
+        const queryKey = queryKeys.albumArtists.topSongs(args.serverId, args.query);
+
         return queryOptions({
-            queryFn: ({ signal }) => {
+            queryFn: async ({ signal }) => {
+                if (shouldUseOfflineQuery()) {
+                    return resolveOfflineQuery(queryKey, () =>
+                        getOfflineTopSongs(args.serverId, args.query),
+                    );
+                }
+
                 return api.controller.getTopSongs({
                     apiClientProps: { serverId: args.serverId, signal },
                     query: args.query,
                 });
             },
-            queryKey: queryKeys.albumArtists.topSongs(args.serverId, args.query),
+            queryKey,
             ...args.options,
         });
     },

@@ -7,6 +7,7 @@ import { Link } from 'react-router';
 import styles from './library-header.module.css';
 
 import { getItemImageUrl, ItemImage } from '/@/renderer/components/item-image/item-image';
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { useIsPlayerFetching } from '/@/renderer/features/player/context/player-context';
 import {
     PlayLastTextButton,
@@ -300,6 +301,7 @@ export const LibraryHeaderMenu = ({
     rating,
 }: LibraryHeaderMenuProps) => {
     const { t } = useTranslation();
+    const { canMutate } = useOfflineReadOnly();
     const isMutatingRating = useIsMutatingRating();
     const isMutatingCreateFavorite = useIsMutatingCreateFavorite();
     const isMutatingDeleteFavorite = useIsMutatingDeleteFavorite();
@@ -345,7 +347,7 @@ export const LibraryHeaderMenu = ({
                 )}
                 {onAlbumRadio && (
                     <Button
-                        disabled={isPlayerFetching}
+                        disabled={!canMutate || isPlayerFetching}
                         leftSection={
                             isPlayerFetching ? (
                                 <Spinner color="white" />
@@ -362,7 +364,7 @@ export const LibraryHeaderMenu = ({
                 )}
                 {onArtistRadio && (
                     <Button
-                        disabled={isPlayerFetching}
+                        disabled={!canMutate || isPlayerFetching}
                         leftSection={
                             isPlayerFetching ? (
                                 <Spinner color="white" />
@@ -382,14 +384,14 @@ export const LibraryHeaderMenu = ({
                 {onRating && (
                     <Rating
                         onChange={onRating}
-                        readOnly={isMutatingRating}
+                        readOnly={isMutatingRating || !canMutate}
                         size="lg"
                         value={rating || 0}
                     />
                 )}
                 {onFavorite && (
                     <ActionIcon
-                        disabled={isMutatingFavorite}
+                        disabled={isMutatingFavorite || !canMutate}
                         icon="favorite"
                         iconProps={{
                             fill: favorite ? 'primary' : undefined,

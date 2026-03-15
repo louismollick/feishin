@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import z from 'zod';
 
 import { api } from '/@/renderer/api';
+import { useOfflineArtworkUrl } from '/@/renderer/features/offline/hooks/use-offline-artwork-url';
 import {
     GeneralSettingsSchema,
     getServerById,
@@ -91,11 +92,17 @@ interface UseItemImageUrlProps {
 export const useItemImageUrl = (args: UseItemImageUrlProps) => {
     const { id, imageUrl, itemType, size, type, useRemoteUrl } = args;
     const serverId = useCurrentServerId();
+    const targetServerId = args.serverId || serverId;
+    const offlineArtworkUrl = useOfflineArtworkUrl(targetServerId, id);
 
     const imageRes = useImageRes();
     const sizeByType: number | undefined = type ? imageRes[type] : undefined;
 
     return useMemo(() => {
+        if (offlineArtworkUrl) {
+            return offlineArtworkUrl;
+        }
+
         if (imageUrl) {
             return imageUrl;
         }
@@ -104,7 +111,6 @@ export const useItemImageUrl = (args: UseItemImageUrlProps) => {
             return undefined;
         }
 
-        const targetServerId = args.serverId || serverId;
         let baseUrl: string | undefined;
 
         if (useRemoteUrl) {
@@ -119,17 +125,35 @@ export const useItemImageUrl = (args: UseItemImageUrlProps) => {
                 query: { id, itemType, size: size ?? sizeByType },
             }) || undefined
         );
-    }, [args.serverId, id, imageUrl, itemType, serverId, size, sizeByType, useRemoteUrl]);
+    }, [
+        id,
+        imageUrl,
+        itemType,
+        offlineArtworkUrl,
+        targetServerId,
+        size,
+        sizeByType,
+        useRemoteUrl,
+    ]);
 };
 
 export const useItemImageRequest = (args: UseItemImageUrlProps) => {
     const { id, imageUrl, itemType, size, type, useRemoteUrl } = args;
     const serverId = useCurrentServerId();
+    const targetServerId = args.serverId || serverId;
+    const offlineArtworkUrl = useOfflineArtworkUrl(targetServerId, id);
 
     const imageRes = useImageRes();
     const sizeByType: number | undefined = type ? imageRes[type] : undefined;
 
     return useMemo(() => {
+        if (offlineArtworkUrl) {
+            return {
+                cacheKey: offlineArtworkUrl,
+                url: offlineArtworkUrl,
+            } satisfies ImageRequest;
+        }
+
         if (imageUrl) {
             return {
                 cacheKey: imageUrl,
@@ -141,7 +165,6 @@ export const useItemImageRequest = (args: UseItemImageUrlProps) => {
             return undefined;
         }
 
-        const targetServerId = args.serverId || serverId;
         let baseUrl: string | undefined;
 
         if (useRemoteUrl) {
@@ -156,7 +179,16 @@ export const useItemImageRequest = (args: UseItemImageUrlProps) => {
                 query: { id, itemType, size: size ?? sizeByType },
             }) || undefined
         );
-    }, [args.serverId, id, imageUrl, itemType, serverId, size, sizeByType, useRemoteUrl]);
+    }, [
+        id,
+        imageUrl,
+        itemType,
+        offlineArtworkUrl,
+        targetServerId,
+        size,
+        sizeByType,
+        useRemoteUrl,
+    ]);
 };
 
 export function getItemImageRequest(args: UseItemImageUrlProps) {

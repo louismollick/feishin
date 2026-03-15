@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { useCreateFavorite } from '/@/renderer/features/shared/mutations/create-favorite-mutation';
 import { useDeleteFavorite } from '/@/renderer/features/shared/mutations/delete-favorite-mutation';
 import { useCurrentServerId } from '/@/renderer/store';
@@ -15,6 +16,7 @@ interface SetFavoriteActionProps {
 export const SetFavoriteAction = ({ ids, itemType }: SetFavoriteActionProps) => {
     const { t } = useTranslation();
     const serverId = useCurrentServerId();
+    const { canMutate } = useOfflineReadOnly();
 
     const createFavoriteMutation = useCreateFavorite({});
     const deleteFavoriteMutation = useDeleteFavorite({});
@@ -47,6 +49,7 @@ export const SetFavoriteAction = ({ ids, itemType }: SetFavoriteActionProps) => 
         <ContextMenu.Submenu>
             <ContextMenu.SubmenuTarget>
                 <ContextMenu.Item
+                    disabled={!canMutate}
                     leftIcon="favorite"
                     onSelect={(e) => e.preventDefault()}
                     rightIcon="arrowRightS"
@@ -55,10 +58,10 @@ export const SetFavoriteAction = ({ ids, itemType }: SetFavoriteActionProps) => 
                 </ContextMenu.Item>
             </ContextMenu.SubmenuTarget>
             <ContextMenu.SubmenuContent>
-                <ContextMenu.Item leftIcon="favorite" onSelect={handleAddToFavorites}>
+                <ContextMenu.Item disabled={!canMutate} leftIcon="favorite" onSelect={handleAddToFavorites}>
                     {t('action.addToFavorites', { postProcess: 'sentenceCase' })}
                 </ContextMenu.Item>
-                <ContextMenu.Item leftIcon="unfavorite" onSelect={handleRemoveFromFavorites}>
+                <ContextMenu.Item disabled={!canMutate} leftIcon="unfavorite" onSelect={handleRemoveFromFavorites}>
                     {t('action.removeFromFavorites', { postProcess: 'sentenceCase' })}
                 </ContextMenu.Item>
             </ContextMenu.SubmenuContent>

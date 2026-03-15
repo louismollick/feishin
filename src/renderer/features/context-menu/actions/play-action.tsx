@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getOfflineSongsForItem } from '/@/renderer/features/offline/offline-read';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { useCurrentServerId, usePlayButtonBehavior } from '/@/renderer/store';
 import { ContextMenu } from '/@/shared/components/context-menu/context-menu';
@@ -19,7 +20,7 @@ export const PlayAction = ({ ids, itemType, songs }: PlayActionProps) => {
     const serverId = useCurrentServerId();
 
     const handlePlay = useCallback(
-        (playType: Play) => {
+        async (playType: Play) => {
             if (ids.length === 0 || !serverId) return;
 
             if (
@@ -29,7 +30,13 @@ export const PlayAction = ({ ids, itemType, songs }: PlayActionProps) => {
             ) {
                 player.addToQueueByData(songs || [], playType);
             } else {
-                player.addToQueueByFetch(serverId, ids, itemType, playType);
+                const offlineSongs = await getOfflineSongsForItem(serverId, ids, itemType);
+
+                if (offlineSongs.length > 0) {
+                    player.addToQueueByData(offlineSongs, playType);
+                } else {
+                    player.addToQueueByFetch(serverId, ids, itemType, playType);
+                }
             }
         },
         [ids, itemType, player, serverId, songs],

@@ -3,6 +3,7 @@ import isElectron from 'is-electron';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
+import { getOfflineLyricsId, offlineDb } from '/@/renderer/features/offline/offline-db';
 import { queryClient, QueryHookArgs } from '/@/renderer/lib/react-query';
 import { getServerById, useSettingsStore } from '/@/renderer/store';
 import { hasFeature } from '/@/shared/api/utils';
@@ -269,6 +270,32 @@ export const lyricsQueries = {
             gcTime: Infinity,
             queryFn: async ({ signal }): Promise<LyricsQueryResult> => {
                 if (!song) return emptyResult();
+
+                if (!navigator.onLine) {
+                    const offlineLyrics = await offlineDb.lyrics.get(
+                        getOfflineLyricsId(args.serverId, song.id),
+                    );
+
+                    if (offlineLyrics) {
+                        const selected = {
+                            ...(offlineLyrics.metadata || {
+                                artist: song.artists?.[0]?.name || '',
+                                name: song.name,
+                                remote: false,
+                                source: 'offline',
+                            }),
+                            lyrics: offlineLyrics.lyrics,
+                        };
+
+                        return {
+                            ...emptyResult(),
+                            local: selected,
+                            selected,
+                            selectedOffsetMs: offlineLyrics.metadata?.offsetMs || 0,
+                            selectedSynced: Array.isArray(offlineLyrics.lyrics),
+                        };
+                    }
+                }
 
                 const prev = queryClient.getQueryData<LyricsQueryResult>(lyricsKey);
                 const overrideSelection = prev?.overrideSelection ?? null;

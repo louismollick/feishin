@@ -2,6 +2,7 @@ import { openContextModal } from '@mantine/modals';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOfflineReadOnly } from '/@/renderer/features/offline/offline-capabilities';
 import { ContextMenu } from '/@/shared/components/context-menu/context-menu';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
@@ -12,6 +13,7 @@ interface ShareActionProps {
 
 export const ShareAction = ({ ids, itemType }: ShareActionProps) => {
     const { t } = useTranslation();
+    const { canMutate } = useOfflineReadOnly();
 
     const resourceType = useMemo(() => {
         switch (itemType) {
@@ -42,7 +44,7 @@ export const ShareAction = ({ ids, itemType }: ShareActionProps) => {
     }, [ids, resourceType, t]);
 
     return (
-        <ContextMenu.Item leftIcon="share" onSelect={onSelect}>
+        <ContextMenu.Item disabled={!canMutate} leftIcon="share" onSelect={onSelect}>
             {t('page.contextMenu.shareItem', { postProcess: 'sentenceCase' })}
         </ContextMenu.Item>
     );

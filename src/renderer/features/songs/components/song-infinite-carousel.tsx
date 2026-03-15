@@ -12,6 +12,7 @@ import { DataRow, MemoizedItemCard } from '/@/renderer/components/item-card/item
 import { useDefaultItemListControls } from '/@/renderer/components/item-list/helpers/item-list-controls';
 import { useGridRows } from '/@/renderer/components/item-list/helpers/use-grid-rows';
 import { DefaultItemControlProps } from '/@/renderer/components/item-list/types';
+import { getOfflineSongList, shouldUseOfflineQuery } from '/@/renderer/features/offline/offline-read';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { useCurrentServerId } from '/@/renderer/store';
 import {
@@ -178,6 +179,16 @@ function useSongListInfinite(
         },
         initialPageParam: '0',
         queryFn: ({ pageParam, signal }) => {
+            if (shouldUseOfflineQuery()) {
+                return getOfflineSongList(serverId, {
+                    limit: itemLimit,
+                    sortBy,
+                    sortOrder,
+                    startIndex: Number(pageParam),
+                    ...additionalQuery,
+                });
+            }
+
             return api.controller.getSongList({
                 apiClientProps: { serverId, signal },
                 query: {

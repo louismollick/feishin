@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { NotificationData } from '@mantine/notifications';
 
 import {
@@ -12,7 +13,7 @@ import clsx from 'clsx';
 import styles from './toast.module.css';
 
 interface NotificationProps extends Omit<NotificationData, 'message'> {
-    message?: string;
+    message?: ReactNode;
     onClose?: () => void;
     type?: 'error' | 'info' | 'success' | 'warning';
 }
