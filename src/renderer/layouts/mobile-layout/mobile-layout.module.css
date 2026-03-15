@@ -58,4 +58,5 @@
 
 .full-screen-player-overlay-with-playerbar {
     bottom: 90px;
+    overscroll-behavior: none;
 }
