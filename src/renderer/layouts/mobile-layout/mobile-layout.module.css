@@ -49,6 +49,7 @@
 .main-content-locked {
     overflow: hidden;
     overscroll-behavior: none;
+    touch-action: none;
 }
 
 .full-screen-player-overlay {
