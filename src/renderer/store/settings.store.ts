@@ -2383,10 +2383,25 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     });
                 }
 
+                if (version <= 26) {
+                    // Ensure newly introduced sidebar items are added for existing clients
+                    // with persisted sidebar configuration.
+                    const existingSidebarItemIds = new Set(
+                        state.general.sidebarItems.map((item) => item.id),
+                    );
+                    const missingSidebarItems = sidebarItems.filter(
+                        (item) => !existingSidebarItemIds.has(item.id),
+                    );
+
+                    if (missingSidebarItems.length > 0) {
+                        state.general.sidebarItems.push(...missingSidebarItems);
+                    }
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 26,
+            version: 27,
         },
     ),
 );
