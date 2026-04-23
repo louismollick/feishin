@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import isElectron from 'is-electron';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useIsFetchingItemListCount } from '/@/renderer/components/item-list/helpers/use-is-fetching-item-list';
@@ -12,7 +13,8 @@ import { LibraryHeaderBar } from '/@/renderer/features/shared/components/library
 import { ListSearchInput } from '/@/renderer/features/shared/components/list-search-input';
 import { SongListHeaderFilters } from '/@/renderer/features/songs/components/song-list-header-filters';
 import { useSongListFilters } from '/@/renderer/features/songs/hooks/use-song-list-filters';
-import { useCurrentServerId } from '/@/renderer/store';
+import { useCurrentServerId, useOfflineActions } from '/@/renderer/store';
+import { Button } from '/@/shared/components/button/button';
 import { Flex } from '/@/shared/components/flex/flex';
 import { Group } from '/@/shared/components/group/group';
 import { Stack } from '/@/shared/components/stack/stack';
@@ -31,6 +33,7 @@ export const SongListHeader = ({ title }: SongListHeaderProps) => {
                 <Flex justify="space-between" w="100%">
                     <LibraryHeaderBar ignoreMaxWidth>
                         <PlayButton />
+                        <DownloadAllTracksOfflineButton />
                         <PageTitle title={title} />
                         <SongListHeaderBadge />
                     </LibraryHeaderBar>
@@ -68,6 +71,41 @@ const PlayButton = () => {
     }, [query, customFilters]);
 
     return <LibraryHeaderBar.PlayButton itemType={LibraryItem.SONG} listQuery={mergedQuery} />;
+};
+
+const DownloadAllTracksOfflineButton = () => {
+    const { t } = useTranslation();
+    const serverId = useCurrentServerId();
+    const { customFilters } = useListContext();
+    const { query } = useSongListFilters();
+    const { queueAllTracksDownload } = useOfflineActions();
+
+    const mergedQuery = useMemo(() => {
+        return {
+            ...query,
+            ...(customFilters ?? {}),
+        };
+    }, [query, customFilters]);
+
+    const onClick = useCallback(async () => {
+        await queueAllTracksDownload({
+            filters: mergedQuery,
+            serverId,
+        });
+    }, [mergedQuery, queueAllTracksDownload, serverId]);
+
+    if (isElectron()) {
+        return null;
+    }
+
+    return (
+        <Button onClick={onClick} variant="default">
+            {t('page.trackList.downloadAllOffline', {
+                defaultValue: 'download all tracks offline',
+                postProcess: 'sentenceCase',
+            })}
+        </Button>
+    );
 };
 
 const PageTitle = ({ title }: { title?: string }) => {
