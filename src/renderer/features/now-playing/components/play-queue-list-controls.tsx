@@ -17,11 +17,16 @@ import { useCurrentServer, usePlayerStoreBase } from '/@/renderer/store';
 import { hasFeature } from '/@/shared/api/utils';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Group } from '/@/shared/components/group/group';
+import { SegmentedControl } from '/@/shared/components/segmented-control/segmented-control';
 import { ServerFeature } from '/@/shared/types/features-types';
 import { ItemListKey, ListDisplayType } from '/@/shared/types/types';
 
+export type QueueViewMode = 'downloads' | 'queue';
+
 interface PlayQueueListOptionsProps {
     handleSearch: (value: string) => void;
+    mode?: QueueViewMode;
+    onModeChange?: (mode: QueueViewMode) => void;
     searchTerm?: string;
     tableRef: RefObject<ItemListHandle | null>;
     type: ItemListKey;
@@ -29,6 +34,8 @@ interface PlayQueueListOptionsProps {
 
 export const PlayQueueListControls = ({
     handleSearch,
+    mode = 'queue',
+    onModeChange,
     searchTerm,
     tableRef,
     type,
@@ -54,28 +61,60 @@ export const PlayQueueListControls = ({
     return (
         <Group h="65px" justify="space-between" px="1rem" py="1rem" w="100%">
             <Group gap="xs">
-                <QueueRestoreActions />
-                <ActionIcon
-                    icon="mediaShuffle"
-                    iconProps={{ size: 'lg' }}
-                    onClick={handleShuffleQueue}
-                    tooltip={{ label: t('player.shuffle', { postProcess: 'sentenceCase' }) }}
-                    variant="subtle"
-                />
-                <ActionIcon
-                    icon="x"
-                    iconProps={{ size: 'lg' }}
-                    onClick={handleClearQueue}
-                    tooltip={{ label: t('action.clearQueue', { postProcess: 'sentenceCase' }) }}
-                    variant="subtle"
-                />
-                <ActionIcon
-                    icon="goToItem"
-                    iconProps={{ size: 'lg' }}
-                    onClick={handleJumpToCurrent}
-                    tooltip={{ label: t('action.goToCurrent', { postProcess: 'sentenceCase' }) }}
-                    variant="subtle"
-                />
+                {onModeChange && (
+                    <SegmentedControl
+                        data={[
+                            {
+                                label: t('player.queueViewModeQueue', {
+                                    defaultValue: 'Queue',
+                                    postProcess: 'titleCase',
+                                }),
+                                value: 'queue',
+                            },
+                            {
+                                label: t('player.queueViewModeDownloads', {
+                                    defaultValue: 'Downloads',
+                                    postProcess: 'titleCase',
+                                }),
+                                value: 'downloads',
+                            },
+                        ]}
+                        onChange={(value) => onModeChange(value as QueueViewMode)}
+                        value={mode}
+                    />
+                )}
+                {mode === 'queue' && (
+                    <>
+                        <QueueRestoreActions />
+                        <ActionIcon
+                            icon="mediaShuffle"
+                            iconProps={{ size: 'lg' }}
+                            onClick={handleShuffleQueue}
+                            tooltip={{
+                                label: t('player.shuffle', { postProcess: 'sentenceCase' }),
+                            }}
+                            variant="subtle"
+                        />
+                        <ActionIcon
+                            icon="x"
+                            iconProps={{ size: 'lg' }}
+                            onClick={handleClearQueue}
+                            tooltip={{
+                                label: t('action.clearQueue', { postProcess: 'sentenceCase' }),
+                            }}
+                            variant="subtle"
+                        />
+                        <ActionIcon
+                            icon="goToItem"
+                            iconProps={{ size: 'lg' }}
+                            onClick={handleJumpToCurrent}
+                            tooltip={{
+                                label: t('action.goToCurrent', { postProcess: 'sentenceCase' }),
+                            }}
+                            variant="subtle"
+                        />
+                    </>
+                )}
             </Group>
             <Group gap="xs">
                 <SearchInput
@@ -83,20 +122,22 @@ export const PlayQueueListControls = ({
                     onChange={(e) => handleSearch(e.target.value)}
                     value={searchTerm}
                 />
-                <ListConfigMenu
-                    displayTypes={[
-                        { hidden: true, value: ListDisplayType.GRID },
-                        ...SONG_DISPLAY_TYPES,
-                    ]}
-                    listKey={type}
-                    optionsConfig={{
-                        table: {
-                            itemsPerPage: { hidden: true },
-                            pagination: { hidden: true },
-                        },
-                    }}
-                    tableColumnsData={SONG_TABLE_COLUMNS}
-                />
+                {mode === 'queue' && (
+                    <ListConfigMenu
+                        displayTypes={[
+                            { hidden: true, value: ListDisplayType.GRID },
+                            ...SONG_DISPLAY_TYPES,
+                        ]}
+                        listKey={type}
+                        optionsConfig={{
+                            table: {
+                                itemsPerPage: { hidden: true },
+                                pagination: { hidden: true },
+                            },
+                        }}
+                        tableColumnsData={SONG_TABLE_COLUMNS}
+                    />
+                )}
             </Group>
         </Group>
     );

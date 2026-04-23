@@ -10,8 +10,12 @@ import styles from './sidebar-play-queue.module.css';
 import { ItemListHandle } from '/@/renderer/components/item-list/types';
 import { lyricsQueries } from '/@/renderer/features/lyrics/api/lyrics-api';
 import { Lyrics } from '/@/renderer/features/lyrics/lyrics';
+import { OfflineDownloadsList } from '/@/renderer/features/now-playing/components/offline-downloads-list';
 import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queue';
-import { PlayQueueListControls } from '/@/renderer/features/now-playing/components/play-queue-list-controls';
+import {
+    PlayQueueListControls,
+    QueueViewMode,
+} from '/@/renderer/features/now-playing/components/play-queue-list-controls';
 import {
     useCombinedLyricsAndVisualizer,
     useFullScreenPlayerStore,
@@ -45,6 +49,7 @@ const ButterchurnVisualizer = lazy(() =>
 
 export const SidebarPlayQueue = () => {
     const tableRef = useRef<ItemListHandle | null>(null);
+    const [mode, setMode] = useState<QueueViewMode>('queue');
     const [search, setSearch] = useState<string | undefined>(undefined);
     const {
         expanded: isFullScreenPlayerExpanded,
@@ -113,16 +118,22 @@ export const SidebarPlayQueue = () => {
                 <Stack gap={0} h="100%" w="100%">
                     <PlayQueueListControls
                         handleSearch={setSearch}
+                        mode={mode}
+                        onModeChange={setMode}
                         searchTerm={search}
                         tableRef={tableRef}
                         type={ItemListKey.SIDE_QUEUE}
                     />
                     <div className={styles.playQueueSection}>
-                        <PlayQueue
-                            listKey={ItemListKey.SIDE_QUEUE}
-                            ref={tableRef}
-                            searchTerm={search}
-                        />
+                        {mode === 'queue' ? (
+                            <PlayQueue
+                                listKey={ItemListKey.SIDE_QUEUE}
+                                ref={tableRef}
+                                searchTerm={search}
+                            />
+                        ) : (
+                            <OfflineDownloadsList searchTerm={search} />
+                        )}
                     </div>
                 </Stack>
             );
@@ -217,17 +228,23 @@ export const SidebarPlayQueue = () => {
                 <Stack gap={0} h="100%" w="100%">
                     <PlayQueueListControls
                         handleSearch={setSearch}
+                        mode={mode}
+                        onModeChange={setMode}
                         searchTerm={search}
                         tableRef={tableRef}
                         type={ItemListKey.SIDE_QUEUE}
                     />
                     <Flex direction="column" style={{ flex: 1, minHeight: 0 }}>
                         <div className={styles.playQueueSection}>
-                            <PlayQueue
-                                listKey={ItemListKey.SIDE_QUEUE}
-                                ref={tableRef}
-                                searchTerm={search}
-                            />
+                            {mode === 'queue' ? (
+                                <PlayQueue
+                                    listKey={ItemListKey.SIDE_QUEUE}
+                                    ref={tableRef}
+                                    searchTerm={search}
+                                />
+                            ) : (
+                                <OfflineDownloadsList searchTerm={search} />
+                            )}
                         </div>
                     </Flex>
                 </Stack>
