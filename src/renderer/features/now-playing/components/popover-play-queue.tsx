@@ -2,12 +2,8 @@ import { t } from 'i18next';
 import { useRef, useState } from 'react';
 
 import { ItemListHandle } from '/@/renderer/components/item-list/types';
-import { OfflineDownloadsList } from '/@/renderer/features/now-playing/components/offline-downloads-list';
 import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queue';
-import {
-    PlayQueueListControls,
-    QueueViewMode,
-} from '/@/renderer/features/now-playing/components/play-queue-list-controls';
+import { PlayQueueListControls } from '/@/renderer/features/now-playing/components/play-queue-list-controls';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Popover } from '/@/shared/components/popover/popover';
 import { Stack } from '/@/shared/components/stack/stack';
@@ -26,7 +22,6 @@ export const PopoverPlayQueue = ({
     opened: controlledOpened,
 }: PopoverPlayQueueProps = {}) => {
     const queueRef = useRef<ItemListHandle | null>(null);
-    const [mode, setMode] = useState<QueueViewMode>('queue');
     const [search, setSearch] = useState<string | undefined>(undefined);
 
     const [internalOpened, internalHandlers] = useDisclosure(false);
@@ -66,21 +61,15 @@ export const PopoverPlayQueue = ({
                 <Stack gap={0} h="100%" w="100%">
                     <PlayQueueListControls
                         handleSearch={setSearch}
-                        mode={mode}
-                        onModeChange={setMode}
                         searchTerm={search}
                         tableRef={queueRef}
                         type={ItemListKey.SIDE_QUEUE}
                     />
-                    {mode === 'queue' ? (
-                        <PlayQueue
-                            listKey={ItemListKey.SIDE_QUEUE}
-                            ref={queueRef}
-                            searchTerm={search}
-                        />
-                    ) : (
-                        <OfflineDownloadsList searchTerm={search} />
-                    )}
+                    <PlayQueue
+                        listKey={ItemListKey.SIDE_QUEUE}
+                        ref={queueRef}
+                        searchTerm={search}
+                    />
                 </Stack>
             </Popover.Dropdown>
         </Popover>

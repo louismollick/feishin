@@ -620,6 +620,7 @@
             "folders": "$t(entity.folder, {\"count\": 2})",
             "genres": "$t(entity.genre, {\"count\": 2})",
             "home": "$t(common.home)",
+            "downloads": "downloads",
             "radio": "$t(entity.radioStation, {\"count\": 2})",
             "myLibrary": "my library",
             "nowPlaying": "now playing",

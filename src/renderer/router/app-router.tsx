@@ -17,6 +17,9 @@ const NowPlayingRoute = lazy(
 const AlbumListRoute = lazy(() => import('/@/renderer/features/albums/routes/album-list-route'));
 
 const SongListRoute = lazy(() => import('/@/renderer/features/songs/routes/song-list-route'));
+const OfflineDownloadsRoute = lazy(
+    () => import('/@/renderer/features/offline/routes/offline-downloads-route'),
+);
 
 const PlaylistDetailSongListRoute = lazy(
     () => import('/@/renderer/features/playlists/routes/playlist-detail-song-list-route'),
@@ -222,6 +225,10 @@ export const AppRouter = () => {
                                         <Route
                                             element={<NowPlayingRoute />}
                                             path={AppRoute.NOW_PLAYING}
+                                        />
+                                        <Route
+                                            element={<OfflineDownloadsRoute />}
+                                            path={AppRoute.OFFLINE_DOWNLOADS}
                                         />
                                         <Route path={AppRoute.LIBRARY_GENRES}>
                                             <Route element={<GenreListRoute />} index />

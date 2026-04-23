@@ -617,11 +617,35 @@ export const downloadSongOffline = async (args: {
         return offlineDb.tracks.get(trackId);
     }
 
+    const queuedTrack: OfflineTrackRecord = {
+        artworkId: existingTrack?.artworkId || null,
+        audioBlob: existingTrack?.audioBlob || null,
+        downloadedAt: existingTrack?.downloadedAt || null,
+        error: null,
+        id: trackId,
+        imageId: song.imageId,
+        lyricsId: existingTrack?.lyricsId || null,
+        mimeType: existingTrack?.mimeType || null,
+        serverId: song._serverId,
+        sizeBytes: existingTrack?.sizeBytes || 0,
+        song,
+        songId: song.id,
+        sourceRefs: mergedSourceRefs,
+        status: 'queued',
+    };
+
+    await offlineDb.tracks.put(queuedTrack);
+
     const queuedJob = await upsertJob(song, 'queued', 0, null);
     await onJobProgress?.(queuedJob);
     await requestOfflineStoragePersistence();
 
     try {
+        await offlineDb.tracks.put({
+            ...queuedTrack,
+            status: 'downloading',
+        });
+
         const downloadingJob = await upsertJob(song, 'downloading', 0, null);
         await onJobProgress?.(downloadingJob);
 
