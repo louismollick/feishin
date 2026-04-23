@@ -80,6 +80,18 @@ export const AudioPlayers = () => {
     );
 };
 
+const isIOSWeb = () => {
+    if (isElectron()) {
+        return false;
+    }
+
+    const userAgent = navigator.userAgent;
+    const isAppleMobile = /iPad|iPhone|iPod/.test(userAgent);
+    const isIPadOSDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+
+    return isAppleMobile || isIPadOSDesktopUA;
+};
+
 const AudioPlayersContent = ({
     audioContext,
     audioDeviceId,
@@ -102,6 +114,10 @@ const AudioPlayersContent = ({
     const isRadioActive = useIsRadioActive();
 
     useEffect(() => {
+        if (isIOSWeb()) {
+            return;
+        }
+
         if (webAudio && 'AudioContext' in window) {
             let context: AudioContext;
 
