@@ -2,10 +2,12 @@ import { createWithEqualityFn } from 'zustand/traditional';
 
 import {
     downloadSongOffline,
+    fetchAllSongsForOfflineQuery,
     fetchSongsForOfflineCollection,
     getOfflineTrack,
     hasOfflineContent,
     loadOfflineLibrary,
+    mergeOfflineTrackSourceRef,
     removeOfflineTrack,
 } from '/@/renderer/features/offline/offline-service';
 import { toast } from '/@/shared/components/toast/toast';
@@ -15,14 +17,21 @@ import {
     OfflineSourceRef,
     OfflineTrackRecord,
     Song,
+    SongListQuery,
 } from '/@/shared/types/domain-types';
 
 type OfflineState = {
     actions: {
         hydrate: () => Promise<void>;
+        queueAllTracksDownload: (args: {
+            filters?: Omit<Partial<SongListQuery>, 'startIndex'>;
+            retryFailed?: boolean;
+            serverId: string;
+        }) => Promise<void>;
         queueCollectionDownload: (args: {
             ids: string[];
             itemType: LibraryItem;
+            retryFailed?: boolean;
             serverId: string;
             songs?: Song[];
         }) => Promise<void>;
@@ -37,6 +46,15 @@ type OfflineState = {
     tracks: Record<string, OfflineTrackRecord>;
 };
 
+type QueueOfflineSummary = {
+    queued: number;
+    retryQueued: number;
+    skippedAlreadyDownloaded: number;
+    skippedAlreadyQueuedOrDownloading: number;
+    skippedFailed: number;
+    totalScanned: number;
+};
+
 const toTrackRecordMap = (tracks: OfflineTrackRecord[]) =>
     Object.fromEntries(tracks.map((track) => [track.id, track])) as Record<
         string,
@@ -45,6 +63,8 @@ const toTrackRecordMap = (tracks: OfflineTrackRecord[]) =>
 
 const toJobRecordMap = (jobs: OfflineDownloadJob[]) =>
     Object.fromEntries(jobs.map((job) => [job.id, job])) as Record<string, OfflineDownloadJob>;
+
+const getOfflineTrackStateKey = (song: Song) => `${song._serverId}:${song.id}`;
 
 export const useOfflineStoreBase = createWithEqualityFn<OfflineState>()((set, get) => ({
     actions: {
@@ -57,7 +77,44 @@ export const useOfflineStoreBase = createWithEqualityFn<OfflineState>()((set, ge
                 tracks: toTrackRecordMap(tracks),
             });
         },
-        queueCollectionDownload: async ({ ids, itemType, serverId, songs }) => {
+        queueAllTracksDownload: async ({ filters, retryFailed = false, serverId }) => {
+            const { songs, totalScanned } = await fetchAllSongsForOfflineQuery({
+                query: {
+                    ...(filters || {}),
+                },
+                serverId,
+            });
+
+            const summary = await queueSongsForOfflineDownload({
+                get,
+                retryFailed,
+                songs,
+                sourceRefResolver: (song) => ({ id: song.id, type: LibraryItem.SONG }),
+            });
+
+            const resolvedSummary = {
+                ...summary,
+                totalScanned,
+            };
+
+            if (songs.length === 0) {
+                toast.warn({
+                    message: 'No songs available to download offline.',
+                });
+                return;
+            }
+
+            toast.success({
+                message: formatQueueSummaryMessage(resolvedSummary),
+            });
+        },
+        queueCollectionDownload: async ({
+            ids,
+            itemType,
+            retryFailed = false,
+            serverId,
+            songs,
+        }) => {
             let sourceType: OfflineSourceRef['type'];
 
             switch (itemType) {
@@ -86,15 +143,18 @@ export const useOfflineStoreBase = createWithEqualityFn<OfflineState>()((set, ge
                 return;
             }
 
-            for (const song of collectionSongs) {
-                await get().actions.queueSongDownload(song, {
+            const summary = await queueSongsForOfflineDownload({
+                get,
+                retryFailed,
+                songs: collectionSongs,
+                sourceRefResolver: (song) => ({
                     id: sourceType === LibraryItem.SONG ? song.id : ids[0] || song.id,
                     type: sourceType,
-                });
-            }
+                }),
+            });
 
             toast.success({
-                message: `Queued ${collectionSongs.length} song${collectionSongs.length === 1 ? '' : 's'} for offline download.`,
+                message: formatQueueSummaryMessage(summary),
             });
         },
         queueSongDownload: async (song, sourceRef) => {
@@ -155,6 +215,78 @@ export const useOfflineStoreBase = createWithEqualityFn<OfflineState>()((set, ge
     offlineMode: false,
     tracks: {},
 }));
+
+const formatQueueSummaryMessage = (summary: QueueOfflineSummary) => {
+    const parts = [
+        `Scanned ${summary.totalScanned} track${summary.totalScanned === 1 ? '' : 's'}.`,
+        `Queued ${summary.queued} new track${summary.queued === 1 ? '' : 's'}.`,
+        `Skipped ${summary.skippedAlreadyDownloaded} already downloaded.`,
+        `Skipped ${summary.skippedAlreadyQueuedOrDownloading} already queued/downloading.`,
+    ];
+
+    if (summary.retryQueued > 0) {
+        parts.push(`Retried ${summary.retryQueued} previously failed.`);
+    } else if (summary.skippedFailed > 0) {
+        parts.push(`Skipped ${summary.skippedFailed} failed (retry not enabled).`);
+    }
+
+    return parts.join(' ');
+};
+
+const queueSongsForOfflineDownload = async (args: {
+    get: () => OfflineState;
+    retryFailed: boolean;
+    songs: Song[];
+    sourceRefResolver: (song: Song) => OfflineSourceRef;
+}): Promise<QueueOfflineSummary> => {
+    const { get, retryFailed, songs, sourceRefResolver } = args;
+    const dedupeMap = new Map<string, Song>();
+
+    for (const song of songs) {
+        dedupeMap.set(getOfflineTrackStateKey(song), song);
+    }
+
+    const summary: QueueOfflineSummary = {
+        queued: 0,
+        retryQueued: 0,
+        skippedAlreadyDownloaded: 0,
+        skippedAlreadyQueuedOrDownloading: 0,
+        skippedFailed: 0,
+        totalScanned: songs.length,
+    };
+
+    for (const song of dedupeMap.values()) {
+        const sourceRef = sourceRefResolver(song);
+        const track = get().tracks[getOfflineTrackStateKey(song)];
+
+        if (track?.status === 'downloaded') {
+            summary.skippedAlreadyDownloaded += 1;
+            await mergeOfflineTrackSourceRef(song, sourceRef);
+            continue;
+        }
+
+        if (track?.status === 'queued' || track?.status === 'downloading') {
+            summary.skippedAlreadyQueuedOrDownloading += 1;
+            await mergeOfflineTrackSourceRef(song, sourceRef);
+            continue;
+        }
+
+        if (track?.status === 'failed' && !retryFailed) {
+            summary.skippedFailed += 1;
+            await mergeOfflineTrackSourceRef(song, sourceRef);
+            continue;
+        }
+
+        if (track?.status === 'failed' && retryFailed) {
+            summary.retryQueued += 1;
+        }
+
+        await get().actions.queueSongDownload(song, sourceRef);
+        summary.queued += 1;
+    }
+
+    return summary;
+};
 
 export const useOfflineHydrated = () => useOfflineStoreBase((state) => state.hydrated);
 export const useOfflineMode = () => useOfflineStoreBase((state) => state.offlineMode);

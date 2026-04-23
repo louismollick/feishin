@@ -59,6 +59,65 @@ const fetchSongList = async (serverId: string, query: SongListQuery) => {
     });
 };
 
+const normalizeSongsForQueue = (serverId: string, songs: Song[]) => {
+    const dedupedSongs = new Map<string, Song>();
+
+    for (const song of songs) {
+        const normalizedSong = {
+            ...song,
+            _serverId: song._serverId || serverId,
+        };
+        const dedupeKey = `${normalizedSong._serverId}:${normalizedSong.id}`;
+
+        if (!dedupedSongs.has(dedupeKey)) {
+            dedupedSongs.set(dedupeKey, normalizedSong);
+        }
+    }
+
+    return [...dedupedSongs.values()];
+};
+
+export const fetchAllSongsForOfflineQuery = async (args: {
+    query: Omit<Partial<SongListQuery>, 'startIndex'>;
+    serverId: string;
+}) => {
+    const { query, serverId } = args;
+    const allSongs: Song[] = [];
+    const pageLimit = query.limit ?? 500;
+    let startIndex = 0;
+    let totalScanned = 0;
+    let totalRecordCount = 0;
+
+    while (true) {
+        const page = await fetchSongList(serverId, {
+            ...query,
+            limit: pageLimit,
+            sortBy: query.sortBy || SongListSort.NAME,
+            sortOrder: query.sortOrder || SortOrder.ASC,
+            startIndex,
+        });
+        const items = page.items || [];
+        totalScanned += items.length;
+        totalRecordCount = page.totalRecordCount || totalRecordCount;
+        allSongs.push(...items);
+
+        if (items.length === 0) {
+            break;
+        }
+
+        startIndex += items.length;
+
+        if (totalRecordCount > 0 && startIndex >= totalRecordCount) {
+            break;
+        }
+    }
+
+    return {
+        songs: normalizeSongsForQueue(serverId, allSongs),
+        totalScanned,
+    };
+};
+
 const getAlbumSongsById = async (serverId: string, ids: string[]) => {
     return fetchSongList(serverId, {
         albumIds: ids,
@@ -543,6 +602,21 @@ export const downloadSongOffline = async (args: {
         return offlineDb.tracks.get(trackId);
     }
 
+    if (existingTrack && ['downloading', 'queued'].includes(existingTrack.status)) {
+        await offlineDb.tracks.put({
+            ...existingTrack,
+            song,
+            sourceRefs: mergedSourceRefs,
+        });
+
+        const existingJob = await offlineDb.jobs.get(getOfflineJobId(song._serverId, song.id));
+        if (existingJob) {
+            await onJobProgress?.(existingJob);
+        }
+
+        return offlineDb.tracks.get(trackId);
+    }
+
     const queuedJob = await upsertJob(song, 'queued', 0, null);
     await onJobProgress?.(queuedJob);
     await requestOfflineStoragePersistence();
@@ -611,4 +685,22 @@ export const downloadSongOffline = async (args: {
         await onJobProgress?.(failedJob);
         throw error;
     }
+};
+
+export const mergeOfflineTrackSourceRef = async (song: Song, sourceRef: OfflineSourceRef) => {
+    const trackId = getOfflineTrackId(song._serverId, song.id);
+    const existingTrack = await offlineDb.tracks.get(trackId);
+
+    if (!existingTrack) {
+        return null;
+    }
+
+    const updatedTrack: OfflineTrackRecord = {
+        ...existingTrack,
+        song,
+        sourceRefs: uniqueSourceRefs([...(existingTrack.sourceRefs || []), sourceRef]),
+    };
+
+    await offlineDb.tracks.put(updatedTrack);
+    return updatedTrack;
 };
