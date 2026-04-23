@@ -165,6 +165,33 @@ export const useOfflineStoreBase = createWithEqualityFn<OfflineState>()((set, ge
                             ...state.jobs,
                             [job.id]: job,
                         },
+                        tracks: {
+                            ...state.tracks,
+                            [job.id]: state.tracks[job.id]
+                                ? {
+                                      ...state.tracks[job.id],
+                                      error: job.error,
+                                      song: job.song,
+                                      songId: job.songId,
+                                      status: job.status,
+                                  }
+                                : {
+                                      artworkId: null,
+                                      audioBlob: null,
+                                      downloadedAt: null,
+                                      error: job.error,
+                                      id: job.id,
+                                      imageId: job.song.imageId,
+                                      lyricsId: null,
+                                      mimeType: null,
+                                      serverId: job.serverId,
+                                      sizeBytes: 0,
+                                      song: job.song,
+                                      songId: job.songId,
+                                      sourceRefs: [],
+                                      status: job.status,
+                                  },
+                        },
                     }));
                 },
                 song,
