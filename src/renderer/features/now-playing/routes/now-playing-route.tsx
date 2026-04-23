@@ -2,14 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ItemListHandle } from '/@/renderer/components/item-list/types';
 import { NowPlayingHeader } from '/@/renderer/features/now-playing/components/now-playing-header';
+import { OfflineDownloadsList } from '/@/renderer/features/now-playing/components/offline-downloads-list';
 import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queue';
-import { PlayQueueListControls } from '/@/renderer/features/now-playing/components/play-queue-list-controls';
+import {
+    PlayQueueListControls,
+    QueueViewMode,
+} from '/@/renderer/features/now-playing/components/play-queue-list-controls';
 import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
 import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
 import { useAppStoreActions } from '/@/renderer/store';
 import { ItemListKey } from '/@/shared/types/types';
 
 const NowPlayingRoute = () => {
+    const [mode, setMode] = useState<QueueViewMode>('queue');
     const [search, setSearch] = useState<string | undefined>(undefined);
     const { setSideBar } = useAppStoreActions();
     const tableRef = useRef<ItemListHandle | null>(null);
@@ -29,11 +34,17 @@ const NowPlayingRoute = () => {
             <NowPlayingHeader />
             <PlayQueueListControls
                 handleSearch={setSearch}
+                mode={mode}
+                onModeChange={setMode}
                 searchTerm={search}
                 tableRef={tableRef}
                 type={ItemListKey.QUEUE_SONG}
             />
-            <PlayQueue listKey={ItemListKey.QUEUE_SONG} ref={tableRef} searchTerm={search} />
+            {mode === 'queue' ? (
+                <PlayQueue listKey={ItemListKey.QUEUE_SONG} ref={tableRef} searchTerm={search} />
+            ) : (
+                <OfflineDownloadsList searchTerm={search} />
+            )}
         </AnimatedPage>
     );
 };

@@ -303,6 +303,15 @@ export const useOfflineDownloadedTracks = () =>
                 return right.localeCompare(left);
             }),
     );
+
+export const useOfflineTrackList = () =>
+    useOfflineStoreBase((state) => Object.values(state.tracks));
+export const useOfflineInProgressTracks = () =>
+    useOfflineStoreBase((state) =>
+        Object.values(state.tracks)
+            .filter((track) => track.status === 'queued' || track.status === 'downloading')
+            .sort((a, b) => a.id.localeCompare(b.id)),
+    );
 export const useOfflineTrackRecord = (serverId?: string, songId?: string) =>
     useOfflineStoreBase((state) => {
         if (!serverId || !songId) {
