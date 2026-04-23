@@ -983,6 +983,12 @@ export const sidebarItems: SidebarItemType[] = [
     },
     {
         disabled: false,
+        id: 'Downloads',
+        label: i18n.t('page.sidebar.downloads'),
+        route: AppRoute.OFFLINE_DOWNLOADS,
+    },
+    {
+        disabled: false,
         id: 'Artists',
         label: i18n.t('page.sidebar.albumArtists'),
         route: AppRoute.LIBRARY_ALBUM_ARTISTS,
